@@ -1,200 +1,190 @@
 import streamlit as st
 import google.generativeai as genai
 import json
-import random
 import time
-import datetime
+import random
 
 # --- 1. CONFIGURATION ---
-st.set_page_config(page_title="Live Exam Source AI", layout="wide", page_icon="📡")
+st.set_page_config(page_title="King of Mock Tests 👑", layout="wide", page_icon="🇮🇳")
 
 # API Key
 GOOGLE_API_KEY = "AIzaSyALMoUhT8s7GYOHexDYrhnMNVT1xqQ4bgE"
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# --- 2. MODERN UI (LIVE NEWS STYLE) ---
+# --- 2. CSS STYLING (Royal Look) ---
 st.markdown("""
 <style>
-    .stApp { background-color: #f0f2f5; }
+    .stApp { background-color: #fdfbf7; color: #333; }
     
-    /* Search Bar */
-    .stTextInput > div > div > input {
-        border-radius: 30px;
-        padding: 15px;
-        border: 2px solid #2962ff;
-        font-size: 16px;
-    }
-    
-    /* Hero Section */
+    /* Royal Header */
     .hero-card {
-        background: linear-gradient(90deg, #2962ff 0%, #0015ff 100%);
-        padding: 25px; border-radius: 15px; color: white; text-align: center;
-        margin-bottom: 20px; box-shadow: 0 4px 20px rgba(41, 98, 255, 0.3);
+        background: linear-gradient(to right, #DAA520, #FFD700); /* Gold Colors */
+        padding: 25px; border-radius: 15px; text-align: center;
+        margin-bottom: 25px; box-shadow: 0 4px 15px rgba(218, 165, 32, 0.4);
+        border: 2px solid #B8860B;
     }
+    .hero-card h1 { color: #4b3621; font-weight: 800; margin: 0; }
+    .hero-card p { color: #4b3621; font-weight: 600; }
     
-    /* Question Card with Source Badge */
+    /* Question Card */
     .q-card {
-        background: white; padding: 20px; border-radius: 12px;
-        border-left: 5px solid #2962ff; margin-bottom: 20px;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        background: white; padding: 20px; border-radius: 10px;
+        border-left: 6px solid #DAA520; margin-bottom: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     
     /* Source Tag */
-    .source-tag {
-        background-color: #e3f2fd; color: #1565c0;
-        padding: 4px 10px; border-radius: 20px;
-        font-size: 12px; font-weight: bold;
-        display: inline-block; margin-bottom: 10px;
-        border: 1px solid #bbdefb;
+    .ref-tag {
+        background-color: #fff8e1; color: #8d6e63;
+        padding: 4px 10px; border-radius: 4px;
+        font-size: 12px; font-weight: bold; border: 1px solid #ffe0b2;
     }
     
-    .status-live {
-        color: red; font-weight: bold; animation: blink 1.5s infinite;
-    }
-    @keyframes blink { 50% { opacity: 0; } }
+    /* Result Colors */
+    .correct { background-color: #e8f5e9; border: 1px solid #c8e6c9; color: #1b5e20; padding: 10px; border-radius: 8px;}
+    .wrong { background-color: #ffebee; border: 1px solid #ffcdd2; color: #b71c1c; padding: 10px; border-radius: 8px;}
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. SESSION STATE ---
-if 'page' not in st.session_state: st.session_state.page = "home"
-if 'questions' not in st.session_state: st.session_state.questions = []
-if 'responses' not in st.session_state: st.session_state.responses = {}
-if 'topic' not in st.session_state: st.session_state.topic = ""
+# --- 3. INDIAN EXAM LIBRARY (The Master List) ---
+# Ye hai aapki "Library". Har exam yahan list hai.
+INDIAN_EXAM_HUB = {
+    "🏛️ UPSC & State PSC": ["UPSC CSE (Prelims)", "UPPSC", "BPSC", "MPPSC", "RAS", "JPSC"],
+    "🚂 SSC & Railways": ["SSC CGL", "SSC CHSL", "SSC MTS", "SSC GD", "RRB NTPC", "RRB Group D", "RRB ALP"],
+    "⚙️ Engineering (JEE)": ["JEE Mains", "JEE Advanced", "BITSAT", "WBJEE", "MHT CET", "GATE (CS)", "GATE (Mech)"],
+    "🩺 Medical (NEET)": ["NEET UG", "AIIMS Nursing", "NEET PG", "B.Sc Nursing"],
+    "⚔️ Defence (NDA/CDS)": ["NDA (Maths)", "NDA (GAT)", "CDS (OTA)", "AFCAT", "Indian Army Agniveer"],
+    "🏦 Banking": ["SBI PO", "IBPS PO", "RBI Grade B", "LIC AAO", "RRB Office Assistant"],
+    "🎓 Teaching & Others": ["CTET", "UGC NET (Paper 1)", "KVS", "DSSSB", "CLAT (Law)", "CAT (MBA)"]
+}
 
-# --- 4. LIVE AI ENGINE (SOURCE HUNTER) ---
-def get_live_questions(topic):
-    # Aaj ki date taaki current affairs purana na ho
-    today = datetime.date.today().strftime("%B %Y")
-    random_seed = random.randint(1, 10000) # Isse har baar naya paper banega
+# --- 4. EXAM PATTERN LOGIC (AI Brain) ---
+def get_indian_paper(exam_name):
+    # Specific instruction for "King Level" Quality
+    prompt_style = "Standard Competitive Exam"
     
+    if "UPSC" in exam_name:
+        prompt_style = "Use 'Statement Based' questions (1 only, 2 only). Focus on Polity (Laxmikanth), History (Spectrum), Environment."
+    elif "JEE" in exam_name:
+        prompt_style = "Strictly Numerical & Conceptual. Physics (HC Verma level), Chemistry (NCERT Deep lines), Math (Cengage level)."
+    elif "NEET" in exam_name:
+        prompt_style = "Strictly NCERT Biology based lines. Assertion-Reasoning type questions included."
+    elif "SSC" in exam_name or "Railways" in exam_name:
+        prompt_style = "Focus on Quant Shortcuts, Reasoning Puzzles, and Static GK (Lucent style)."
+    elif "NDA" in exam_name:
+        prompt_style = "Maths should be 11th/12th level. GAT should cover English and General Science."
+
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
-        
-        # SPECIAL PROMPT: Source Mangwaya Hai
         prompt = f"""
-        Act as a Live Exam Engine. User wants questions for: "{topic}".
-        Current Context: {today} [Random Seed: {random_seed}]
+        Act as the 'King of Mock Tests' for India.
+        Create a Premium Quality Mock Test for: "{exam_name}".
         
-        Create 10 High-Quality MCQ Questions.
-        CRITICAL REQUIREMENT: For every question, cite a REAL SOURCE.
+        INSTRUCTIONS:
+        1. Pattern: {prompt_style}
+        2. Difficulty: Exam Level (Not too easy).
+        3. Language: English (Standard).
+        4. Quantity: 10 Questions.
         
-        Examples of Sources:
-        - "Source: The Hindu (Jan 2025)"
-        - "Source: NCERT Biology Class 11, Ch-4"
-        - "Source: SSC CGL PYQ 2022"
-        - "Source: Economic Survey of India"
-        
-        Output JSON Array:
+        OUTPUT FORMAT (JSON ONLY):
         [{{
             "q": "Question Text",
             "opt": ["A", "B", "C", "D"],
-            "ans": "Correct Option",
-            "src": "Exact Source Name",
-            "exp": "Explanation"
+            "ans": "Correct Option Full Text",
+            "ref": "Reference Book/Topic (e.g., NCERT Class 11, Laxmikanth Ch-5)",
+            "exp": "Detailed Solution/Trick"
         }}]
         """
-        
         res = model.generate_content(prompt)
         return json.loads(res.text.replace("```json", "").replace("```", "").strip())
     except:
-        # Fallback (Agar AI busy ho)
-        return [
-            {"q": "Live Connection Weak: Who is the current RBI Governor?", "opt": ["Shaktikanta Das", "Urjit Patel", "Raghuram Rajan", "Manmohan Singh"], "ans": "Shaktikanta Das", "src": "Source: RBI Official Website", "exp": "He is the 25th Governor."},
-            {"q": "General Science: Chemical formula of Water?", "opt": ["H2O", "CO2", "O2", "NaCl"], "ans": "H2O", "src": "Source: NCERT Science Class 9", "exp": "Universal solvent."}
-        ]
+        return []
 
-# --- 5. HOME PAGE (LIVE SEARCH) ---
+# --- 5. SESSION STATE ---
+if 'page' not in st.session_state: st.session_state.page = "home"
+if 'questions' not in st.session_state: st.session_state.questions = []
+if 'responses' not in st.session_state: st.session_state.responses = {}
+if 'current_exam' not in st.session_state: st.session_state.current_exam = ""
+
+# --- 6. PAGE: HOME (LIBRARY VIEW) ---
 if st.session_state.page == "home":
     st.markdown("""
     <div class="hero-card">
-        <h1>📡 Live Exam Source AI</h1>
-        <p>Exam ka naam likhein, AI <span class="status-live">● LIVE</span> source se paper banayega.</p>
+        <h1>👑 KING OF MOCK TESTS 👑</h1>
+        <p>India's Largest Free Exam Library | No Paywall | Pure Selection</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # Search Bar
-    col1, col2 = st.columns([4, 1])
-    with col1:
-        query = st.text_input("🔍 Search Any Exam / Topic (e.g., 'UPSC Current Affairs', 'SSC Geometry', 'NEET Genetics')", placeholder="Type here...")
-    with col2:
-        st.write("")
-        st.write("")
-        if st.button("🔴 Go Live", type="primary", use_container_width=True):
-            if query:
-                st.session_state.topic = query
-                with st.status(f"📡 Connecting to Live Sources for '{query}'...", expanded=True):
-                    st.write("🔍 Scanning Books & News...")
+    # Sidebar for Category
+    with st.sidebar:
+        st.header("📂 Select Category")
+        category = st.radio("Choose Stream:", list(INDIAN_EXAM_HUB.keys()))
+        st.info("Designed for 100% Success Rate")
+
+    # Main Area: Show Exams in that Category
+    st.subheader(f"📚 {category}")
+    exams = INDIAN_EXAM_HUB[category]
+    
+    # Grid Layout for Buttons
+    cols = st.columns(3)
+    for i, exam in enumerate(exams):
+        with cols[i % 3]:
+            if st.button(f"🚀 Start {exam}", use_container_width=True):
+                st.session_state.current_exam = exam
+                with st.status("⚙️ Setting up Exam Paper...", expanded=True):
+                    st.write("🔍 Analyzing Syllabus...")
                     time.sleep(1)
-                    st.write("📖 Extracting Real Questions...")
-                    st.session_state.questions = get_live_questions(query)
+                    st.write("📖 Picking High-Probablity Questions...")
+                    st.session_state.questions = get_indian_paper(exam)
                     st.session_state.responses = {}
                     st.session_state.page = "exam"
                     st.rerun()
 
-    # Quick Trends
-    st.subheader("⚡ Trending Live Sources")
-    c1, c2, c3 = st.columns(3)
-    if c1.button("📰 Daily Current Affairs (The Hindu)"):
-        st.session_state.topic = "Daily Current Affairs The Hindu"
-        st.session_state.questions = get_live_questions("Latest Current Affairs from The Hindu & Indian Express")
-        st.session_state.responses = {}; st.session_state.page = "exam"; st.rerun()
-        
-    if c2.button("📘 NCERT Science (Class 10-12)"):
-        st.session_state.topic = "NCERT Science Mix"
-        st.session_state.questions = get_live_questions("Hard NCERT Science Questions")
-        st.session_state.responses = {}; st.session_state.page = "exam"; st.rerun()
-        
-    if c3.button("🏛️ SSC CGL (Previous Year)"):
-        st.session_state.topic = "SSC CGL PYQ"
-        st.session_state.questions = get_live_questions("SSC CGL Previous Year Questions Math Reasoning")
-        st.session_state.responses = {}; st.session_state.page = "exam"; st.rerun()
-
-# --- 6. EXAM PAGE (WITH SOURCE BADGE) ---
+# --- 7. PAGE: EXAM MODE ---
 elif st.session_state.page == "exam":
-    st.markdown(f"### 📝 Live Test: {st.session_state.topic}")
-    st.caption("AI ne neeche diye gaye sources se ye paper banaya hai.")
+    st.markdown(f"### ✍️ {st.session_state.current_exam} - Live Test")
+    st.progress(len(st.session_state.responses)/len(st.session_state.questions))
     
     for i, q in enumerate(st.session_state.questions):
-        # Display Source Badge
-        st.markdown(f'<span class="source-tag">📡 {q.get("src", "Source: General Knowledge")}</span>', unsafe_allow_html=True)
-        
-        # Display Question
+        st.markdown(f'<div class="ref-tag">📖 Ref: {q.get("ref", "Syllabus")}</div>', unsafe_allow_html=True)
         st.markdown(f'<div class="q-card"><b>Q{i+1}.</b> {q["q"]}</div>', unsafe_allow_html=True)
+        
         sel = st.radio(f"Select Answer {i+1}", q["opt"], key=f"q{i}", index=None)
         if sel: st.session_state.responses[i] = sel
-        st.write("") # Gap
+        st.write("") # Spacer
 
     st.write("---")
-    if st.button("✅ Submit & Verify Sources", type="primary"):
+    if st.button("✅ Submit Paper", type="primary"):
         st.session_state.page = "result"
         st.rerun()
 
-# --- 7. RESULT PAGE ---
+# --- 8. PAGE: RESULT & ANALYSIS ---
 elif st.session_state.page == "result":
     score = sum([1 for i, q in enumerate(st.session_state.questions) if st.session_state.responses.get(i) == q['ans']])
+    total = len(st.session_state.questions)
     
     st.markdown(f"""
     <div class="hero-card">
-        <h1>Score: {score} / {len(st.session_state.questions)}</h1>
-        <p>Source Verification Complete ✅</p>
+        <h1>Result: {score} / {total}</h1>
+        <p>{'👑 King Level Performance!' if score > 8 else 'Needs Improvement 📚'}</p>
     </div>
     """, unsafe_allow_html=True)
     
     for i, q in enumerate(st.session_state.questions):
-        user = st.session_state.responses.get(i, "Skipped")
+        user = st.session_state.responses.get(i, "Not Attempted")
+        css = "correct" if user == q['ans'] else "wrong"
         status = "✅ Correct" if user == q['ans'] else "❌ Wrong"
-        color = "#d4edda" if user == q['ans'] else "#f8d7da"
         
         st.markdown(f"""
-        <div style="background-color: {color}; padding: 15px; border-radius: 10px; margin-bottom: 10px;">
-            <small style="color: #555;"><b>📍 {q.get('src', 'Source: AI Library')}</b></small><br>
-            <h4 style="margin: 5px 0;">Q{i+1}: {q['q']}</h4>
-            <p>Your Ans: <b>{user}</b> | Correct: <b>{q['ans']}</b></p>
+        <div class="{css}">
+            <small><b>Ref: {q.get('ref')}</b></small><br>
+            <b>Q{i+1}: {q['q']}</b><br>
+            Your Ans: {user} | Correct: <b>{q['ans']}</b><br>
             <hr>
             <i>💡 Explanation: {q['exp']}</i>
-        </div>
+        </div><br>
         """, unsafe_allow_html=True)
         
-    if st.button("🔍 Search New Live Topic"):
+    if st.button("🏠 Back to Library"):
         st.session_state.page = "home"
         st.rerun()
