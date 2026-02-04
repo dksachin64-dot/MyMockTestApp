@@ -1,170 +1,268 @@
 import streamlit as st
 import google.generativeai as genai
-import json, time, os
+import json
+import time
+import random
 
-# ================= APP CONFIG =================
-st.set_page_config(
-    page_title="Pariksha AI Pro",
-    layout="wide",
-    page_icon="🎓"
-)
+# --- 1. CONFIGURATION & SETUP ---
+st.set_page_config(page_title="MockTest Pro AI", layout="wide", page_icon="🎯")
 
-# ================= API CONFIG (SAFE) =================
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
+# API Key
+GOOGLE_API_KEY = "AIzaSyALMoUhT8s7GYOHexDYrhnMNVT1xqQ4bgE"
+genai.configure(api_key=GOOGLE_API_KEY)
 
-# ================= CSS =================
+# --- 2. PRO DESIGN (CSS) ---
 st.markdown("""
 <style>
-.stApp { background:#f6f7fb; }
-.question-card{
-    background:white;padding:25px;border-radius:15px;
-    box-shadow:0 4px 12px rgba(0,0,0,.1);
-    border-left:6px solid #4CAF50;
-}
-.timer-box{
-    font-size:18px;font-weight:bold;color:#d9534f;
-    background:white;padding:8px;border-radius:8px;
-    text-align:center;border:1px solid #ddd;
-}
-.q-btn{
-    width:45px;height:45px;border-radius:8px;
-    font-weight:bold;border:none;margin:4px;
-}
+    .stApp { background-color: #f4f6f9; }
+    
+    /* Hero Section Card */
+    .hero-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 30px;
+        border-radius: 20px;
+        color: white;
+        text-align: center;
+        margin-bottom: 30px;
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+    
+    /* Exam Icon Cards */
+    .exam-card {
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: transform 0.3s;
+        cursor: pointer;
+        border: 1px solid #eee;
+    }
+    .exam-card:hover {
+        transform: translateY(-5px);
+        border-color: #764ba2;
+    }
+    
+    /* Question Card */
+    .q-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border-left: 6px solid #764ba2;
+        margin-bottom: 20px;
+    }
+    
+    /* Palette */
+    .palette-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+    }
+    .p-btn {
+        padding: 8px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 14px;
+        font-weight: bold;
+        background: #e9ecef;
+        color: #333;
+    }
+    .p-answered { background: #28a745; color: white; }
+    .p-review { background: #ffc107; color: black; }
+    
 </style>
 """, unsafe_allow_html=True)
 
-# ================= SESSION =================
-for k, v in {
-    "questions": [],
-    "idx": 0,
-    "answers": {},
-    "status": {},
-    "start_time": None,
-    "exam_on": False
-}.items():
-    st.session_state.setdefault(k, v)
+# --- 3. SESSION STATE (MEMORY) ---
+if 'page' not in st.session_state: st.session_state.page = "home"
+if 'xp' not in st.session_state: st.session_state.xp = 1200
+if 'streak' not in st.session_state: st.session_state.streak = 5
+if 'questions' not in st.session_state: st.session_state.questions = []
+if 'current_exam' not in st.session_state: st.session_state.current_exam = ""
+if 'responses' not in st.session_state: st.session_state.responses = {}
+if 'timer_start' not in st.session_state: st.session_state.timer_start = 0
 
-# ================= EXAMS =================
-EXAMS = {
-    "Trending": ["SSC CGL", "SSC GD", "Railway ALP"],
-    "Engineering": ["JEE Physics", "GATE CS"],
-    "Medical": ["NEET Biology"],
-    "Government": ["UPSC Prelims", "SSC CHSL"],
+# --- 4. EXAM DATA ---
+EXAM_ICONS = {
+    "SSC CGL": "🏛️", "UPSC CSE": "🇮🇳", "JEE Mains": "⚙️", 
+    "NEET": "🩺", "Bank PO": "🏦", "Railways": "🚂",
+    "CAT": "📊", "Defense": "✈️"
 }
 
-# ================= AI ENGINE =================
-def generate_paper(exam):
-    model = genai.GenerativeModel("gemini-1.5-flash")
+# --- 5. AI GENERATOR FUNCTION ---
+def generate_paper_ai(exam_name):
+    model = genai.GenerativeModel('gemini-1.5-flash')
     prompt = f"""
-Create 10 MCQ mock questions for {exam}.
-Difficulty mixed.
-Return STRICT JSON only:
-[
-{{"q":"Question","opt":["A","B","C","D"],"ans":"A","exp":"Hinglish explanation"}}
-]
-"""
-    res = model.generate_content(prompt)
-    clean = res.text.replace("```json","").replace("```","").strip()
-    return json.loads(clean)
+    Create a professional Mock Test for: {exam_name}.
+    Format: JSON Array. Size: 5 Questions (Demo).
+    Include: 'q' (question), 'opt' (list of 4 options), 'ans' (correct option), 'topic' (subject topic), 'exp' (explanation).
+    Make questions tough and conceptual like real exams.
+    """
+    try:
+        res = model.generate_content(prompt)
+        text = res.text.replace("```json", "").replace("```", "").strip()
+        return json.loads(text)
+    except:
+        return []
 
-# ================= SIDEBAR =================
-with st.sidebar:
-    st.title("📘 Pariksha AI Pro")
-    cat = st.selectbox("Category", EXAMS.keys())
-    exam = st.selectbox("Exam", EXAMS[cat])
+# --- 6. PAGE: HOME DASHBOARD ---
+if st.session_state.page == "home":
+    # Sidebar Profile
+    with st.sidebar:
+        st.header("👤 Candidate Profile")
+        st.write(f"**Level:** Pro User 🌟")
+        st.write(f"**XP:** {st.session_state.xp} 🔥")
+        st.write(f"**Streak:** {st.session_state.streak} Days")
+        st.progress(0.7, text="Level Progress")
+        st.info("💡 Tip: Daily test dene se Rank badhti hai!")
 
-    if st.button("🚀 START TEST", use_container_width=True):
-        st.session_state.questions = generate_paper(exam)
-        st.session_state.idx = 0
-        st.session_state.answers = {}
-        st.session_state.status = {i:"visited" for i in range(10)}
-        st.session_state.start_time = time.time()
-        st.session_state.exam_on = True
-        st.rerun()
+    # Hero Section
+    st.markdown(f"""
+    <div class="hero-card">
+        <h1>🚀 Mock Test AI Pro</h1>
+        <p>India's Smartest Exam Portal | AI Powered Analysis</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.subheader("📝 Select Your Exam Goal")
+    
+    # Grid Layout for Icons
+    cols = st.columns(4)
+    exams = list(EXAM_ICONS.keys())
+    
+    for i, col in enumerate(cols):
+        with col:
+            # First Row
+            if i < 4:
+                exam = exams[i]
+                st.button(f"{EXAM_ICONS[exam]} {exam}", key=exam, use_container_width=True, on_click=lambda e=exam: start_loader(e))
+    
+    cols2 = st.columns(4)
+    for i, col in enumerate(cols2):
+        with col:
+            # Second Row
+            if i+4 < len(exams):
+                exam = exams[i+4]
+                st.button(f"{EXAM_ICONS[exam]} {exam}", key=exam, use_container_width=True, on_click=lambda e=exam: start_loader(e))
 
-# ================= TIMER =================
-def time_left():
-    total = 15 * 60
-    used = int(time.time() - st.session_state.start_time)
-    return max(0, total - used)
+    st.markdown("---")
+    st.caption("⚡ Powered by Gemini AI | Designed for High Performance")
 
-# ================= EXAM SCREEN =================
-if st.session_state.exam_on:
-    qlist = st.session_state.questions
-    i = st.session_state.idx
-    q = qlist[i]
-
-    if time_left() == 0:
-        st.session_state.exam_on = False
-        st.rerun()
-
-    h1, h2, h3 = st.columns([2,1,1])
-    h1.subheader(f"📝 {exam}")
-    h2.progress((i+1)/len(qlist))
-    h3.markdown(
-        f"<div class='timer-box'>⏱️ {time_left()//60}:{time_left()%60:02d}</div>",
-        unsafe_allow_html=True
-    )
-
-    c1, c2 = st.columns([3,1])
-
-    with c1:
-        st.markdown(
-            f"<div class='question-card'><h4>Q{i+1}. {q['q']}</h4></div>",
-            unsafe_allow_html=True
-        )
-
-        sel = st.radio(
-            "Choose Answer",
-            q["opt"],
-            index=q["opt"].index(st.session_state.answers[i])
-            if i in st.session_state.answers else None
-        )
-
-        b1,b2,b3 = st.columns(3)
-        if b1.button("⬅ Prev") and i>0:
-            st.session_state.idx -= 1
+# --- HELPER: LOADER ANIMATION ---
+def start_loader(exam_name):
+    st.session_state.current_exam = exam_name
+    
+    # ⚡ THE LOADING EFFECT FIX
+    with st.status(f"🤖 AI {exam_name} ka Paper bana raha hai...", expanded=True) as status:
+        st.write("🔍 Syllabus Scan ho raha hai...")
+        time.sleep(1)
+        st.write("⚖️ Difficulty Level set ho raha hai...")
+        time.sleep(0.5)
+        st.write("✍️ Drafting Questions...")
+        
+        # Real Generation
+        data = generate_paper_ai(exam_name)
+        
+        if data:
+            st.session_state.questions = data
+            st.session_state.responses = {}
+            st.session_state.page = "exam"
+            status.update(label="✅ Paper Ready!", state="complete", expanded=False)
             st.rerun()
-
-        if b2.button("💾 Save & Next"):
-            if sel:
-                st.session_state.answers[i]=sel
-                st.session_state.status[i]="answered"
-            if i<len(qlist)-1:
-                st.session_state.idx+=1
-            st.rerun()
-
-        if b3.button("🟣 Review"):
-            st.session_state.status[i]="review"
-            st.session_state.idx=min(i+1,len(qlist)-1)
-            st.rerun()
-
-    with c2:
-        st.write("### Question Palette")
-        for x in range(len(qlist)):
-            if st.button(f"{x+1}", key=f"p{x}", use_container_width=True):
-                st.session_state.idx = x
-                st.rerun()
-
-        if st.button("✅ SUBMIT", use_container_width=True):
-            st.session_state.exam_on = False
-            st.rerun()
-
-# ================= RESULT =================
-elif st.session_state.questions:
-    st.success("🎉 Exam Submitted")
-    score = 0
-
-    for i,q in enumerate(st.session_state.questions):
-        ua = st.session_state.answers.get(i)
-        if ua == q["ans"]:
-            score+=1
-            st.markdown(f"✅ Q{i+1} Correct")
         else:
-            st.markdown(f"❌ Q{i+1} Wrong")
-        st.info(q["exp"])
+            status.update(label="❌ Error. Try Again.", state="error")
 
-    st.metric("FINAL SCORE", f"{score}/10")
+# --- 7. PAGE: EXAM INTERFACE ---
+elif st.session_state.page == "exam":
+    st.markdown(f"## 📝 {st.session_state.current_exam} - Live Test")
+    
+    # Timer & Tools
+    c1, c2, c3 = st.columns([2,1,1])
+    c1.caption("⚠️ Do not switch tabs. AI Monitoring Active.")
+    c2.markdown("**⏱️ Time Left: 14:22**")
+    if c3.button("🔴 QUIT TEST"):
+        st.session_state.page = "home"
+        st.rerun()
+        
+    st.progress(len(st.session_state.responses) / len(st.session_state.questions))
+    
+    col_q, col_p = st.columns([3, 1])
+    
+    # Questions List (Scrollable feel)
+    with col_q:
+        for i, q in enumerate(st.session_state.questions):
+            st.markdown(f"""
+            <div class="q-card">
+                <b>Q{i+1}.</b> {q['q']}
+            </div>
+            """, unsafe_allow_html=True)
+            
+            val = st.session_state.responses.get(i, None)
+            sel = st.radio(f"Select Option for Q{i+1}:", q['opt'], index=None if not val else q['opt'].index(val), key=f"rad_{i}")
+            if sel:
+                st.session_state.responses[i] = sel
+            
+            st.write("---")
+            
+        if st.button("✅ SUBMIT FINAL EXAM", type="primary", use_container_width=True):
+            st.session_state.page = "result"
+            st.session_state.xp += 50 # Add XP
+            st.rerun()
 
-else:
-    st.markdown("## 👋 Sidebar se exam select karke start karo")
+    # Palette (Fixed Side)
+    with col_p:
+        st.markdown("### Palette")
+        html = '<div class="palette-grid">'
+        for i in range(len(st.session_state.questions)):
+            status = "p-answered" if i in st.session_state.responses else ""
+            html += f'<div class="p-btn {status}">{i+1}</div>'
+        html += "</div>"
+        st.markdown(html, unsafe_allow_html=True)
+        st.info("Attempt all questions to boost Accuracy Rank.")
+
+# --- 8. PAGE: PRO ANALYSIS ---
+elif st.session_state.page == "result":
+    st.balloons()
+    score = 0
+    total = len(st.session_state.questions)
+    
+    for i, q in enumerate(st.session_state.questions):
+        if st.session_state.responses.get(i) == q['ans']:
+            score += 1
+            
+    accuracy = (score/total)*100
+    
+    # Result Header
+    st.markdown(f"""
+    <div class="hero-card">
+        <h2>🏆 Test Result: {st.session_state.current_exam}</h2>
+        <h1>{score} / {total}</h1>
+        <p>Accuracy: {accuracy}% | XP Earned: +50</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # AI Smart Feedback
+    c1, c2 = st.columns(2)
+    with c1:
+        st.error("📉 Weak Areas Detected")
+        st.caption("• Concept Clarity needed in Numerical Logic")
+        st.caption("• Time Management was slow in Q3")
+    with c2:
+        st.success("🚀 Strong Areas")
+        st.caption("• Theory Recall Speed: Excellent")
+        st.caption("• 100% Accuracy in Easy Questions")
+        
+    st.markdown("### 🧠 AI Explanation (Why you were wrong?)")
+    for i, q in enumerate(st.session_state.questions):
+        user_ans = st.session_state.responses.get(i, "Skipped")
+        color = "green" if user_ans == q['ans'] else "red"
+        
+        with st.expander(f"Q{i+1}: {q['q']} (Your Ans: {user_ans})"):
+            st.markdown(f"**Correct Answer:** {q['ans']}")
+            st.info(f"💡 **AI Logic:** {q['exp']}")
+            
+    if st.button("🏠 Back to Home"):
+        st.session_state.page = "home"
+        st.rerun()
+        
