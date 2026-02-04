@@ -5,232 +5,240 @@ import time
 import random
 
 # --- 1. CONFIGURATION ---
-st.set_page_config(page_title="QUANTUM ENGINE v3.0", layout="wide", page_icon="⚡")
+st.set_page_config(page_title="QUANTUM ENGINE v4.0", layout="wide", page_icon="⚡")
 
 # API Key
 GOOGLE_API_KEY = "AIzaSyALMoUhT8s7GYOHexDYrhnMNVT1xqQ4bgE"
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# --- 2. ADVANCED UI SYSTEM (THE CONTROL CENTER) ---
+# --- 2. ADVANCED CSS (ANIMATIONS & HIERARCHY) ---
 st.markdown("""
 <style>
-    /* 1. Global Reset & Dark Theme */
+    /* 1. Global Deep Dark Theme */
     .stApp {
-        background-color: #0b0f19; /* Ultra Dark Blue/Black */
+        background-color: #050a14; /* Void Black */
         color: #e2e8f0;
-        font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        font-family: 'Segoe UI', Roboto, sans-serif;
     }
 
-    /* 2. Utility: Borders & Sharp Edges */
-    .sharp-card {
-        background: rgba(17, 24, 39, 0.7);
-        border: 1px solid #334155;
-        border-radius: 4px; /* Sharp edges */
-        padding: 15px;
-        margin-bottom: 10px;
+    /* 2. ANIMATIONS (The "Alive" Feel) */
+    @keyframes blink {
+        0% { opacity: 1; text-shadow: 0 0 10px #4ade80; }
+        50% { opacity: 0.4; text-shadow: none; }
+        100% { opacity: 1; text-shadow: 0 0 10px #4ade80; }
+    }
+    .status-dot {
+        color: #4ade80;
+        font-weight: bold;
+        animation: blink 2s infinite;
     }
     
+    @keyframes pulse-border {
+        0% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.7); }
+        70% { box-shadow: 0 0 0 10px rgba(56, 189, 248, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+    }
+    
+    @keyframes timer-deplete {
+        from { width: 100%; }
+        to { width: 0%; }
+    }
+
     /* 3. AI Status Panel (Top) */
-    .ai-status-row {
+    .ai-dashboard-header {
         display: flex;
         justify-content: space-between;
         background: #0f172a;
-        border-bottom: 2px solid #3b82f6;
-        padding: 10px 20px;
-        margin-bottom: 20px;
+        border-bottom: 1px solid #1e293b;
+        padding: 8px 20px;
         font-family: 'Courier New', monospace;
-        font-size: 14px;
-        color: #94a3b8;
+        font-size: 13px;
+        color: #64748b;
+        letter-spacing: 1px;
     }
-    .status-active { color: #4ade80; font-weight: bold; text-shadow: 0 0 5px rgba(74, 222, 128, 0.5); }
-    .status-value { color: #f8fafc; font-weight: bold; }
+    .metric-value { color: #f8fafc; font-weight: bold; }
 
-    /* 4. AI Coach Message Box */
-    .coach-box {
-        border-left: 4px solid #f59e0b; /* Amber Alert */
-        background: rgba(245, 158, 11, 0.1);
-        padding: 15px;
-        margin: 15px 0;
-        font-size: 15px;
-    }
-    .coach-title { color: #f59e0b; font-weight: bold; display: flex; align-items: center; gap: 8px; }
-
-    /* 5. Trust Strip (Badges) */
-    .trust-strip {
-        display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
+    /* 4. AI Coach Insight (Split View) */
+    .coach-panel {
+        background: rgba(15, 23, 42, 0.6);
+        border-left: 4px solid #f59e0b;
+        padding: 20px;
+        border-radius: 4px;
         margin-bottom: 20px;
     }
-    .trust-badge {
-        background: #1e293b;
-        border: 1px solid #475569;
-        color: #cbd5e1;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 11px;
-        display: flex;
-        align-items: center;
-        gap: 5px;
+    .coach-diagnosis { color: #f59e0b; font-weight: 700; font-size: 14px; margin-bottom: 5px; }
+    .coach-action { color: #38bdf8; font-weight: 600; font-size: 15px; display: flex; align-items: center; gap: 10px; }
+
+    /* 5. PRIMARY CTA BUTTON (The "Launch" Button) */
+    /* Targeting the Primary Button specifically */
+    div.stButton > button[kind="primary"] {
+        background: linear-gradient(45deg, #0ea5e9, #2563eb) !important;
+        color: white !important;
+        border: none !important;
+        font-size: 18px !important;
+        font-weight: 800 !important;
+        padding: 20px 0 !important;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        animation: pulse-border 2s infinite;
+        transition: transform 0.2s;
+    }
+    div.stButton > button[kind="primary"]:hover {
+        transform: scale(1.02);
     }
 
-    /* 6. ACTION BUTTONS (Sharp, Neon, High Tech) */
-    .stButton > button {
-        width: 100%;
-        background-color: #0f172a !important; /* Dark Background */
-        color: #38bdf8 !important; /* Neon Blue Text */
-        border: 1px solid #38bdf8 !important; /* Neon Border */
-        border-radius: 2px !important; /* Very Sharp */
-        font-weight: 600 !important;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        transition: all 0.3s ease;
-        padding: 15px 0 !important;
+    /* 6. SECONDARY BUTTONS (Tools) */
+    div.stButton > button[kind="secondary"] {
+        background: #0f172a !important;
+        border: 1px solid #334155 !important;
+        color: #94a3b8 !important;
+        font-size: 14px !important;
     }
-    .stButton > button:hover {
-        background-color: #38bdf8 !important;
-        color: #0f172a !important; /* Black Text on Hover */
-        box-shadow: 0 0 15px rgba(56, 189, 248, 0.6);
+    div.stButton > button[kind="secondary"]:hover {
+        border-color: #38bdf8 !important;
+        color: #38bdf8 !important;
     }
-    
-    /* 7. Live Demo Card */
-    .demo-card {
-        border: 1px dashed #ef4444; /* Red Dashed Border */
-        background: rgba(239, 68, 68, 0.05);
+
+    /* 7. LIVE DEMO CARD (With CSS Timer) */
+    .demo-container {
+        border: 1px dashed #334155;
         padding: 20px;
+        background: #0b0f19;
         position: relative;
     }
-    .timer-badge {
-        position: absolute;
-        top: -10px;
-        right: 20px;
+    .timer-bar {
+        height: 4px;
         background: #ef4444;
-        color: white;
-        padding: 2px 10px;
-        font-size: 12px;
-        font-weight: bold;
-        border-radius: 4px;
+        width: 100%;
+        animation: timer-deplete 15s linear forwards; /* CSS Timer Trick */
+        margin-bottom: 15px;
+    }
+    
+    /* 8. FOOTER STRIP */
+    .footer-strip {
+        position: fixed;
+        bottom: 0; left: 0; width: 100%;
+        background: #0f172a;
+        border-top: 1px solid #1e293b;
+        padding: 5px 20px;
+        display: flex;
+        justify-content: space-between;
+        font-size: 11px;
+        color: #475569;
+        z-index: 999;
     }
 
-    /* Text Hierarchy */
-    h1 { font-weight: 800; letter-spacing: -1px; margin-bottom: 5px; }
-    h3 { font-weight: 600; color: #e2e8f0; margin-top: 0; }
-    p { font-weight: 300; color: #94a3b8; }
-    
 </style>
 """, unsafe_allow_html=True)
 
-# --- 3. BACKEND LOGIC (Mock) ---
+# --- 3. SESSION & LOGIC ---
 if 'page' not in st.session_state: st.session_state.page = "home"
-if 'user_level' not in st.session_state: st.session_state.user_level = 35 # % Progress
+if 'user_xp' not in st.session_state: st.session_state.user_xp = 42
 
-# --- 4. HEADER & CREDIBILITY ---
-st.markdown("<h1>QUANTUM ENGINE <span style='font-size:18px; color:#38bdf8; vertical-align:middle;'>v3.2 AI-CORE</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='margin-bottom: 20px; border-bottom: 1px solid #334155; padding-bottom: 10px;'>Built for serious aspirants. Not for casual practice.</p>", unsafe_allow_html=True)
-
-# --- 5. AI SYSTEM STATUS STRIP (Top Bar) ---
+# --- 4. TOP STATUS BAR (Dynamic) ---
 st.markdown("""
-<div class="ai-status-row">
-    <span>SYSTEM: <span class="status-active">ONLINE ●</span></span>
-    <span>INTELLIGENCE: <span class="status-value">ADAPTIVE MODEL</span></span>
-    <span>PREDICTION ACCURACY: <span class="status-value">94.2%</span></span>
-    <span>LATENCY: <span class="status-value">12ms</span></span>
+<div class="ai-dashboard-header">
+    <span>SYSTEM STATUS: <span class="status-dot">● ONLINE</span></span>
+    <span>ENGINE: <span class="metric-value">QUANTUM v4.0</span></span>
+    <span>LATENCY: <span class="metric-value">14ms</span></span>
+    <span>USER MODEL: <span class="metric-value">DYNAMIC</span></span>
 </div>
 """, unsafe_allow_html=True)
 
-# --- 6. MAIN DASHBOARD LAYOUT ---
+# --- 5. MAIN DASHBOARD ---
 if st.session_state.page == "home":
     
-    # TRUST STRIP
-    st.markdown("""
-    <div class="trust-strip">
-        <span class="trust-badge">🔒 NCERT Mapped</span>
-        <span class="trust-badge">⚡ Real Exam Pattern</span>
-        <span class="trust-badge">📉 Negative Marking ON</span>
-        <span class="trust-badge">⏱️ Time-Pressure Sim</span>
-    </div>
-    """, unsafe_allow_html=True)
+    # HERO HEADER
+    st.markdown("<h1 style='text-align: center; margin-top: 20px; font-size: 48px;'>QUANTUM ENGINE</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center; color: #64748b; font-size: 16px; margin-bottom: 40px;'>⚠️ WARNING: This system penalizes guesswork. Accuracy > Speed.</p>", unsafe_allow_html=True)
 
-    # TWO COLUMN LAYOUT
-    col_dash, col_action = st.columns([1.5, 1])
+    # TWO COLUMNS: INTELLIGENCE vs ACTION
+    col_intel, col_action = st.columns([1.5, 1])
 
-    with col_dash:
-        # A. AI COACH
+    with col_intel:
+        st.markdown("### 📡 INTELLIGENCE FEED")
+        
+        # 1. AI COACH INSIGHT (Reason + Action)
         st.markdown("""
-        <div class="sharp-card">
-            <div class="coach-box">
-                <div class="coach-title">🤖 AI COACH INSIGHT</div>
-                <p style="color: #cbd5e1; margin: 5px 0 0 0;">
-                    "Your Physics <b>Optics</b> accuracy is below JEE Advanced benchmark (42%). 
-                    <b>Diagnostic Test</b> is highly recommended to recalibrate your difficulty curve."
-                </p>
+        <div class="coach-panel">
+            <div class="coach-diagnosis">⚠️ ANOMALY DETECTED: ORGANIC CHEMISTRY</div>
+            <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 15px;">
+                Your reaction mechanism accuracy (34%) is deviating from the Topper Benchmark (85%).
+                The system detects confusion in <b>Nucleophilic Substitution</b>.
+            </p>
+            <div class="coach-action">
+                <span>➤ RECOMMENDED PROTOCOL:</span>
+                <span style="background: rgba(56, 189, 248, 0.1); padding: 2px 8px; border-radius: 4px;">Run Diagnostic Test #OC-2</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
-
-        # B. PROGRESS VISUALIZATION
-        st.markdown("### 🧬 EVOLUTION TRACKER")
-        progress = st.session_state.user_level
-        st.progress(progress/100)
         
-        # Custom Labels below progress
-        c1, c2, c3 = st.columns(3)
-        c1.caption("Foundation")
-        c2.caption(f"Current: {progress}%")
-        c3.caption("Exam Ready")
-
-        # C. LIVE DEMO (High Stakes)
-        st.write("")
-        st.markdown("### 🔥 LIVE SAMPLE (HARD)")
+        # 2. LIVE DEMO QUESTION (Psychological Proof)
+        st.markdown("### 🔥 LIVE CALIBRATION (Sample)")
         st.markdown("""
-        <div class="demo-card">
-            <div class="timer-badge">00:09</div>
-            <p style="color:white; font-size: 14px;"><b>Q.</b> A block of mass m is placed on a wedge of mass M. The wedge is subjected to an acceleration 'a' such that the block remains stationary w.r.t the wedge. Find 'a'.</p>
-            <div style="display:flex; gap:10px; margin-top:10px;">
-                <span style="border:1px solid #555; padding:5px 10px; font-size:12px; color:#aaa;">A) g tan(θ)</span>
-                <span style="border:1px solid #555; padding:5px 10px; font-size:12px; color:#aaa;">B) g cot(θ)</span>
-                <span style="border:1px solid #555; padding:5px 10px; font-size:12px; color:#aaa;">C) g sin(θ)</span>
+        <div class="demo-container">
+            <div class="timer-bar"></div>
+            <p style="color: #ef4444; font-size: 10px; font-weight: bold; letter-spacing: 1px;">HIGH STAKES QUESTION • TIME PRESSURE ON</p>
+            <p style="color: #e2e8f0; font-size: 15px; font-weight: 500;">
+                <b>Q.</b> In a Young's double slit experiment, if the separation between slits is halved and distance to screen is doubled, the fringe width will be:
+            </p>
+            <div style="display: flex; gap: 10px; margin-top: 10px; opacity: 0.7;">
+                <button style="background:none; border:1px solid #555; color:#aaa; padding:5px 15px;">A) Halved</button>
+                <button style="background:none; border:1px solid #555; color:#aaa; padding:5px 15px;">B) Unchanged</button>
+                <button style="background:none; border:1px solid #555; color:#aaa; padding:5px 15px;">C) Quadrupled</button>
             </div>
         </div>
         """, unsafe_allow_html=True)
 
     with col_action:
-        st.markdown("### ⚡ ACTION MODULES")
+        st.markdown("### ⚡ CONTROL DECK")
         
-        # High Tech Buttons
-        if st.button("🚀 LAUNCH AI MOCK TEST"):
+        # GAP
+        st.write("")
+        
+        # PRIMARY CTA (Huge & Pulsing)
+        if st.button("🚀 LAUNCH AI MOCK TEST", type="primary", use_container_width=True):
             st.session_state.page = "setup"
             st.rerun()
-            
-        st.write("") # Gap
         
-        if st.button("🩺 RUN DIAGNOSTIC TEST"):
-            st.toast("Initializing Diagnostic Protocol...", icon="⚙️")
-            
-        st.write("") # Gap
-
-        if st.button("📊 ANALYZE WEAK AREAS"):
-            st.toast("Scanning Performance Data...", icon="🔍")
-            
-        st.write("") # Gap
+        st.markdown("<p style='text-align:center; font-size:11px; color:#475569; margin-top: 5px;'>Auto-configures difficulty based on history</p>", unsafe_allow_html=True)
         
-        if st.button("🔮 PREDICT RANK"):
+        st.write("---") # Divider
+        
+        # SECONDARY TOOLS
+        c1, c2 = st.columns(2)
+        with c1:
+            if st.button("🩺 DIAGNOSTIC", type="secondary", use_container_width=True):
+                st.toast("Running System Diagnostic...", icon="⚙️")
+        with c2:
+            if st.button("📊 WEAK AREAS", type="secondary", use_container_width=True):
+                st.toast("Fetching Error Logs...", icon="📂")
+                
+        if st.button("🔮 PREDICT RANK & COLLEGE", type="secondary", use_container_width=True):
             st.toast("Calculating Probabilities...", icon="🎲")
 
-        st.markdown("""
-        <div style="margin-top: 30px; padding: 15px; border: 1px solid #1e293b; border-radius: 4px; background:#0f172a;">
-            <p style="font-size:12px; color:#64748b; margin:0;">USER MODEL ID: <b>#XJ-9021</b></p>
-            <p style="font-size:12px; color:#64748b; margin:0;">LAST SYNC: <b>JUST NOW</b></p>
-        </div>
-        """, unsafe_allow_html=True)
+# --- 6. FOOTER (Fixed) ---
+st.markdown("""
+<div class="footer-strip">
+    <span>USER ID: <b>#IND-8821</b></span>
+    <span>SESSION: <b>SECURE (TLS 1.3)</b></span>
+    <span>DATABASE: <b>UPDATED 2 MINS AGO</b></span>
+</div>
+""", unsafe_allow_html=True)
 
-# --- 7. EXAM SETUP PAGE (Minimal Logic for Demo) ---
-elif st.session_state.page == "setup":
-    st.markdown("### ⚙️ INITIALIZING TEST ENVIRONMENT")
-    st.info("Loading Neural Weights for Indian Exam Patterns...")
+# --- 7. SETUP PAGE (Dummy) ---
+if st.session_state.page == "setup":
+    st.markdown("### ⚙️ INITIALIZING EXAM ENVIRONMENT...")
+    progress_text = "Calibrating Difficulty Matrix..."
+    my_bar = st.progress(0, text=progress_text)
+
+    for percent_complete in range(100):
+        time.sleep(0.01)
+        my_bar.progress(percent_complete + 1, text=progress_text)
     
-    # Just a dummy return button for now
-    if st.button("⬅️ RETURN TO COMMAND CENTER"):
+    st.success("SYSTEM READY. RENDERING QUESTIONS.")
+    
+    if st.button("⬅️ ABORT MISSION"):
         st.session_state.page = "home"
         st.rerun()
         
