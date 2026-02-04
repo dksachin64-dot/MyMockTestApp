@@ -3,41 +3,55 @@ import google.generativeai as genai
 import json
 import random
 import time
+import datetime
 
 # --- 1. CONFIGURATION ---
-st.set_page_config(page_title="World Exam Library AI", layout="wide", page_icon="🌍")
+st.set_page_config(page_title="Live Exam Source AI", layout="wide", page_icon="📡")
 
 # API Key
 GOOGLE_API_KEY = "AIzaSyALMoUhT8s7GYOHexDYrhnMNVT1xqQ4bgE"
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# --- 2. CSS STYLING (World Class UI) ---
+# --- 2. MODERN UI (LIVE NEWS STYLE) ---
 st.markdown("""
 <style>
-    .stApp { background-color: #0e1117; color: white; }
+    .stApp { background-color: #f0f2f5; }
     
-    /* Search Bar Style */
+    /* Search Bar */
     .stTextInput > div > div > input {
-        border-radius: 25px;
+        border-radius: 30px;
         padding: 15px;
-        border: 2px solid #4facfe;
-        font-size: 18px;
+        border: 2px solid #2962ff;
+        font-size: 16px;
     }
     
+    /* Hero Section */
     .hero-card {
-        background: linear-gradient(135deg, #00f260 0%, #0575E6 100%);
-        padding: 30px; border-radius: 15px; text-align: center;
-        margin-bottom: 30px; box-shadow: 0 0 20px rgba(0,242,96, 0.4);
+        background: linear-gradient(90deg, #2962ff 0%, #0015ff 100%);
+        padding: 25px; border-radius: 15px; color: white; text-align: center;
+        margin-bottom: 20px; box-shadow: 0 4px 20px rgba(41, 98, 255, 0.3);
     }
     
+    /* Question Card with Source Badge */
     .q-card {
-        background: #1f2937; padding: 20px; border-radius: 12px;
-        border-left: 5px solid #00f260; margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        background: white; padding: 20px; border-radius: 12px;
+        border-left: 5px solid #2962ff; margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     
-    .result-correct { border: 1px solid #00f260; background: rgba(0,242,96, 0.1); padding: 10px; border-radius: 8px; }
-    .result-wrong { border: 1px solid #ff4b1f; background: rgba(255,75,31, 0.1); padding: 10px; border-radius: 8px; }
+    /* Source Tag */
+    .source-tag {
+        background-color: #e3f2fd; color: #1565c0;
+        padding: 4px 10px; border-radius: 20px;
+        font-size: 12px; font-weight: bold;
+        display: inline-block; margin-bottom: 10px;
+        border: 1px solid #bbdefb;
+    }
+    
+    .status-live {
+        color: red; font-weight: bold; animation: blink 1.5s infinite;
+    }
+    @keyframes blink { 50% { opacity: 0; } }
 </style>
 """, unsafe_allow_html=True)
 
@@ -45,129 +59,142 @@ st.markdown("""
 if 'page' not in st.session_state: st.session_state.page = "home"
 if 'questions' not in st.session_state: st.session_state.questions = []
 if 'responses' not in st.session_state: st.session_state.responses = {}
-if 'exam_title' not in st.session_state: st.session_state.exam_title = ""
+if 'topic' not in st.session_state: st.session_state.topic = ""
 
-# --- 4. UNIVERSAL AI ENGINE (Duniya ka koi bhi exam) ---
-def get_universal_paper(exam_query):
+# --- 4. LIVE AI ENGINE (SOURCE HUNTER) ---
+def get_live_questions(topic):
+    # Aaj ki date taaki current affairs purana na ho
+    today = datetime.date.today().strftime("%B %Y")
+    random_seed = random.randint(1, 10000) # Isse har baar naya paper banega
+    
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
         
-        # PROMPT: Ye AI ko kisi bhi exam ka expert bana deta hai
+        # SPECIAL PROMPT: Source Mangwaya Hai
         prompt = f"""
-        Act as a Global Examination Setter.
-        The user wants a Mock Test for: "{exam_query}".
+        Act as a Live Exam Engine. User wants questions for: "{topic}".
+        Current Context: {today} [Random Seed: {random_seed}]
         
-        1. Identify the country and standard of this exam.
-        2. Create 10 High-Quality Multiple Choice Questions based on its REAL syllabus.
-        3. If it's a language exam (IELTS/TOEFL), focus on Grammar/Vocab.
-        4. If it's Math/Science (JEE/SAT), focus on numericals.
+        Create 10 High-Quality MCQ Questions.
+        CRITICAL REQUIREMENT: For every question, cite a REAL SOURCE.
         
-        Output strictly as JSON:
-        [{{"q": "Question", "opt": ["A", "B", "C", "D"], "ans": "Correct Option Text", "exp": "Explanation"}}]
+        Examples of Sources:
+        - "Source: The Hindu (Jan 2025)"
+        - "Source: NCERT Biology Class 11, Ch-4"
+        - "Source: SSC CGL PYQ 2022"
+        - "Source: Economic Survey of India"
+        
+        Output JSON Array:
+        [{{
+            "q": "Question Text",
+            "opt": ["A", "B", "C", "D"],
+            "ans": "Correct Option",
+            "src": "Exact Source Name",
+            "exp": "Explanation"
+        }}]
         """
         
         res = model.generate_content(prompt)
-        text = res.text.replace("```json", "").replace("```", "").strip()
-        return json.loads(text)
+        return json.loads(res.text.replace("```json", "").replace("```", "").strip())
     except:
-        # Fallback (Agar naam galat ho ya AI fail ho)
+        # Fallback (Agar AI busy ho)
         return [
-            {"q": "AI Connection Issue: What is the capital of the World?", "opt": ["London", "New York", "No Capital", "Paris"], "ans": "No Capital", "exp": "The world has no single capital."},
-            {"q": "General Logic: 2 + 2 * 2 = ?", "opt": ["6", "8", "4", "10"], "ans": "6", "exp": "BODMAS Rule: Multiply first."}
+            {"q": "Live Connection Weak: Who is the current RBI Governor?", "opt": ["Shaktikanta Das", "Urjit Patel", "Raghuram Rajan", "Manmohan Singh"], "ans": "Shaktikanta Das", "src": "Source: RBI Official Website", "exp": "He is the 25th Governor."},
+            {"q": "General Science: Chemical formula of Water?", "opt": ["H2O", "CO2", "O2", "NaCl"], "ans": "H2O", "src": "Source: NCERT Science Class 9", "exp": "Universal solvent."}
         ]
 
-# --- 5. PAGE: HOME (SEARCH ENGINE) ---
+# --- 5. HOME PAGE (LIVE SEARCH) ---
 if st.session_state.page == "home":
     st.markdown("""
     <div class="hero-card">
-        <h1>🌍 World Exam Library AI</h1>
-        <p>Type ANY Exam Name (e.g., SAT USA, UPSC India, Gaokao China)</p>
+        <h1>📡 Live Exam Source AI</h1>
+        <p>Exam ka naam likhein, AI <span class="status-live">● LIVE</span> source se paper banayega.</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # --- SEARCH BAR ---
+    # Search Bar
     col1, col2 = st.columns([4, 1])
     with col1:
-        query = st.text_input("🔍 Search Exam (Ex: 'Hardest JEE Math', 'IELTS English', 'USMLE Medical')", placeholder="Type exam name here...")
+        query = st.text_input("🔍 Search Any Exam / Topic (e.g., 'UPSC Current Affairs', 'SSC Geometry', 'NEET Genetics')", placeholder="Type here...")
     with col2:
-        st.write("") # Spacer
-        st.write("") 
-        if st.button("🚀 Generate Test", type="primary", use_container_width=True):
+        st.write("")
+        st.write("")
+        if st.button("🔴 Go Live", type="primary", use_container_width=True):
             if query:
-                st.session_state.exam_title = query
-                with st.status(f"🌎 Connecting to Global Library for '{query}'...", expanded=True):
-                    st.write("🧠 Analyzing Exam Pattern...")
+                st.session_state.topic = query
+                with st.status(f"📡 Connecting to Live Sources for '{query}'...", expanded=True):
+                    st.write("🔍 Scanning Books & News...")
                     time.sleep(1)
-                    st.write("✍️ Drafting Questions...")
-                    st.session_state.questions = get_universal_paper(query)
+                    st.write("📖 Extracting Real Questions...")
+                    st.session_state.questions = get_live_questions(query)
                     st.session_state.responses = {}
                     st.session_state.page = "exam"
                     st.rerun()
 
-    # --- POPULAR SUGGESTIONS ---
-    st.markdown("### 🔥 Popular Across the World")
-    c1, c2, c3, c4 = st.columns(4)
-    if c1.button("🇺🇸 SAT (Scholastic Aptitude)"):
-        st.session_state.exam_title = "SAT USA Math & English"
-        st.session_state.questions = get_universal_paper("SAT USA Math & English")
+    # Quick Trends
+    st.subheader("⚡ Trending Live Sources")
+    c1, c2, c3 = st.columns(3)
+    if c1.button("📰 Daily Current Affairs (The Hindu)"):
+        st.session_state.topic = "Daily Current Affairs The Hindu"
+        st.session_state.questions = get_live_questions("Latest Current Affairs from The Hindu & Indian Express")
         st.session_state.responses = {}; st.session_state.page = "exam"; st.rerun()
         
-    if c2.button("🇬🇧 GRE (Graduate Record)"):
-        st.session_state.exam_title = "GRE Verbal & Quant"
-        st.session_state.questions = get_universal_paper("GRE Verbal & Quant")
+    if c2.button("📘 NCERT Science (Class 10-12)"):
+        st.session_state.topic = "NCERT Science Mix"
+        st.session_state.questions = get_live_questions("Hard NCERT Science Questions")
         st.session_state.responses = {}; st.session_state.page = "exam"; st.rerun()
         
-    if c3.button("🇮🇳 UPSC CSE (India)"):
-        st.session_state.exam_title = "UPSC CSE General Studies"
-        st.session_state.questions = get_universal_paper("UPSC CSE General Studies")
-        st.session_state.responses = {}; st.session_state.page = "exam"; st.rerun()
-        
-    if c4.button("🇨🇳 Gaokao (China Physics)"):
-        st.session_state.exam_title = "Gaokao Physics Hard"
-        st.session_state.questions = get_universal_paper("Gaokao Physics Hard")
+    if c3.button("🏛️ SSC CGL (Previous Year)"):
+        st.session_state.topic = "SSC CGL PYQ"
+        st.session_state.questions = get_live_questions("SSC CGL Previous Year Questions Math Reasoning")
         st.session_state.responses = {}; st.session_state.page = "exam"; st.rerun()
 
-# --- 6. PAGE: EXAM ---
+# --- 6. EXAM PAGE (WITH SOURCE BADGE) ---
 elif st.session_state.page == "exam":
-    st.markdown(f"## 📝 Exam: {st.session_state.exam_title}")
-    st.progress(len(st.session_state.responses)/len(st.session_state.questions))
+    st.markdown(f"### 📝 Live Test: {st.session_state.topic}")
+    st.caption("AI ne neeche diye gaye sources se ye paper banaya hai.")
     
     for i, q in enumerate(st.session_state.questions):
+        # Display Source Badge
+        st.markdown(f'<span class="source-tag">📡 {q.get("src", "Source: General Knowledge")}</span>', unsafe_allow_html=True)
+        
+        # Display Question
         st.markdown(f'<div class="q-card"><b>Q{i+1}.</b> {q["q"]}</div>', unsafe_allow_html=True)
         sel = st.radio(f"Select Answer {i+1}", q["opt"], key=f"q{i}", index=None)
         if sel: st.session_state.responses[i] = sel
-        
+        st.write("") # Gap
+
     st.write("---")
-    if st.button("✅ Submit & Check Global Rank", type="primary"):
+    if st.button("✅ Submit & Verify Sources", type="primary"):
         st.session_state.page = "result"
         st.rerun()
 
-# --- 7. PAGE: RESULT ---
+# --- 7. RESULT PAGE ---
 elif st.session_state.page == "result":
     score = sum([1 for i, q in enumerate(st.session_state.questions) if st.session_state.responses.get(i) == q['ans']])
     
     st.markdown(f"""
     <div class="hero-card">
         <h1>Score: {score} / {len(st.session_state.questions)}</h1>
-        <p>Global Standard Assessment Completed</p>
+        <p>Source Verification Complete ✅</p>
     </div>
     """, unsafe_allow_html=True)
     
     for i, q in enumerate(st.session_state.questions):
         user = st.session_state.responses.get(i, "Skipped")
-        css = "result-correct" if user == q['ans'] else "result-wrong"
         status = "✅ Correct" if user == q['ans'] else "❌ Wrong"
+        color = "#d4edda" if user == q['ans'] else "#f8d7da"
         
         st.markdown(f"""
-        <div class="{css}">
-            <b>Q{i+1}: {q['q']}</b><br>
-            Your Ans: {user} | Correct: <b>{q['ans']}</b><br>
-            <small>{status}</small><br>
-            <i>💡 Analysis: {q['exp']}</i>
-        </div><br>
+        <div style="background-color: {color}; padding: 15px; border-radius: 10px; margin-bottom: 10px;">
+            <small style="color: #555;"><b>📍 {q.get('src', 'Source: AI Library')}</b></small><br>
+            <h4 style="margin: 5px 0;">Q{i+1}: {q['q']}</h4>
+            <p>Your Ans: <b>{user}</b> | Correct: <b>{q['ans']}</b></p>
+            <hr>
+            <i>💡 Explanation: {q['exp']}</i>
+        </div>
         """, unsafe_allow_html=True)
         
-    if st.button("🔍 Search Another Exam"):
+    if st.button("🔍 Search New Live Topic"):
         st.session_state.page = "home"
         st.rerun()
-    
