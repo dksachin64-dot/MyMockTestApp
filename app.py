@@ -4,238 +4,326 @@ import json
 import time
 import random
 
-# --- 1. SYSTEM CONFIGURATION ---
-st.set_page_config(page_title="Quantum JEE/NEET AI", layout="wide", page_icon="🧬")
+# --- 1. CONFIGURATION ---
+st.set_page_config(page_title="NTA PRO: Exam Portal", layout="wide", page_icon="🧬")
 
 # API Key
 GOOGLE_API_KEY = "AIzaSyALMoUhT8s7GYOHexDYrhnMNVT1xqQ4bgE"
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# --- 2. HIGH-TECH 'DARK LAB' UI ---
-st.markdown("""
-<style>
-    /* Main Background - Dark Sci-Fi Theme */
-    .stApp { background-color: #0f172a; color: #e2e8f0; }
-    
-    /* Neon Header */
-    .hero-container {
-        background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%);
-        padding: 3px; border-radius: 15px; box-shadow: 0 0 20px rgba(0, 114, 255, 0.6);
-        margin-bottom: 30px;
-    }
-    .hero-content {
-        background: #1e293b; padding: 25px; border-radius: 12px; text-align: center;
-    }
-    .hero-content h1 {
-        background: -webkit-linear-gradient(#00c6ff, #0072ff);
-        -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        font-weight: 900; letter-spacing: 2px;
-    }
-    
-    /* Question Card - Glassmorphism */
-    .q-card {
-        background: rgba(30, 41, 59, 0.8);
-        border: 1px solid #334155;
-        padding: 20px; border-radius: 12px;
-        margin-bottom: 20px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-        border-left: 4px solid #00c6ff;
-    }
-    
-    /* NCERT Tag */
-    .ncert-tag {
-        background-color: #064e3b; color: #34d399;
-        padding: 4px 12px; border-radius: 20px;
-        font-size: 11px; font-weight: bold; border: 1px solid #059669;
-        display: inline-block; margin-bottom: 8px;
-    }
-    
-    /* Custom Radio Buttons */
-    div.row-widget.stRadio > div { flex-direction: row; }
-    
-    /* Result Badges */
-    .correct { background: #065f46; border: 1px solid #10b981; padding: 15px; border-radius: 10px; color: #d1fae5; }
-    .wrong { background: #7f1d1d; border: 1px solid #ef4444; padding: 15px; border-radius: 10px; color: #fee2e2; }
-    
-</style>
-""", unsafe_allow_html=True)
-
-# --- 3. ROBUST OFFLINE NCERT DATABASE (Backup) ---
-# Agar AI fail ho, toh ye "Gold Standard" questions aayenge.
-OFFLINE_DB = {
+# --- 2. COMPLETE SYLLABUS DATABASE (NO 11th/12th TAGS) ---
+SYLLABUS = {
     "Physics": [
-        {"q": "A particle moves with equation x = t² - 4t + 3. Find velocity at t=2s.", "opt": ["0 m/s", "2 m/s", "4 m/s", "-2 m/s"], "ans": "0 m/s", "ref": "NCERT XI: Kinematics", "exp": "v = dx/dt = 2t - 4. At t=2, v = 2(2)-4 = 0."},
-        {"q": "Dimensional formula of Gravitational Constant (G)?", "opt": ["M⁻¹L³T⁻²", "MLT⁻²", "M⁻¹L²T⁻²", "M⁰L⁰T⁰"], "ans": "M⁻¹L³T⁻²", "ref": "NCERT XI: Units & Measurements", "exp": "F = Gm1m2/r² => G = Fr²/m1m2."},
-        {"q": "Electric field inside a spherical shell is?", "opt": ["Zero", "Infinite", "Uniform", "Variable"], "ans": "Zero", "ref": "NCERT XII: Electrostatics (Pg 32)", "exp": "According to Gauss Law, E-field inside a conductor is zero."},
-        {"q": "Phenomenon responsible for mirage?", "opt": ["Total Internal Reflection", "Refraction", "Diffraction", "Polarization"], "ans": "Total Internal Reflection", "ref": "NCERT XII: Ray Optics", "exp": "Light travels from denser to rarer medium (Hot air)."},
-        {"q": "Unit of Magnetic Flux?", "opt": ["Weber", "Tesla", "Gauss", "Ampere"], "ans": "Weber", "ref": "NCERT XII: EMI", "exp": "Tesla is for field, Weber is for Flux."}
+        "Kinematics & Laws of Motion", "Rotational Motion", "Gravitation", 
+        "Thermodynamics & KTG", "Oscillations & Waves", "Electrostatics", 
+        "Current Electricity", "Magnetic Effects of Current", "EMI & AC", 
+        "Ray & Wave Optics", "Modern Physics (Dual Nature, Atoms, Nuclei)", "Semiconductors"
     ],
     "Chemistry": [
-        {"q": "Shape of NH3 molecule according to VSEPR?", "opt": ["Pyramidal", "Tetrahedral", "Linear", "Bent"], "ans": "Pyramidal", "ref": "NCERT XI: Chemical Bonding", "exp": "Due to one lone pair on Nitrogen."},
-        {"q": "Which is a colligative property?", "opt": ["Osmotic Pressure", "Viscosity", "Surface Tension", "Refractive Index"], "ans": "Osmotic Pressure", "ref": "NCERT XII: Solutions", "exp": "Depends only on number of solute particles."},
-        {"q": "Hybridization of Carbon in Graphite?", "opt": ["sp2", "sp3", "sp", "dsp2"], "ans": "sp2", "ref": "NCERT XI: p-Block Elements", "exp": "Layered structure, one electron free."},
-        {"q": "Transition elements show color due to?", "opt": ["d-d transition", "f-f transition", "Charge transfer", "Polarization"], "ans": "d-d transition", "ref": "NCERT XII: d-Block Elements", "exp": "Unpaired electrons jump between d-orbitals."},
-        {"q": "Molarity of pure water is?", "opt": ["55.5 M", "18 M", "1 M", "100 M"], "ans": "55.5 M", "ref": "NCERT XI: Mole Concept", "exp": "1000g / 18g/mol = 55.55 mol/L."}
+        "Atomic Structure", "Chemical Bonding", "Thermodynamics", "Equilibrium", 
+        "Redox & Electrochemistry", "Chemical Kinetics", "Surface Chemistry", 
+        "p-Block Elements", "d and f Block Elements", "Coordination Compounds", 
+        "GOC (General Organic Chemistry)", "Hydrocarbons", "Aldehydes, Ketones & Acids", 
+        "Biomolecules & Polymers"
     ],
-    "Biology": [
-        {"q": "Powerhouse of the cell?", "opt": ["Mitochondria", "Nucleus", "Ribosome", "Golgi"], "ans": "Mitochondria", "ref": "NCERT XI: Cell Unit of Life", "exp": "Site of Aerobic Respiration (ATP)."},
-        {"q": "Functional unit of Kidney?", "opt": ["Nephron", "Neuron", "Alveoli", "Villi"], "ans": "Nephron", "ref": "NCERT XI: Excretory Products", "exp": "Filtration unit."},
-        {"q": "Genetic material in HIV?", "opt": ["ss-RNA", "ds-DNA", "ss-DNA", "ds-RNA"], "ans": "ss-RNA", "ref": "NCERT XII: Human Health", "exp": "It is a Retrovirus."},
-        {"q": "Example of homologous organs?", "opt": ["Forelimbs of Man & Bat", "Wings of Bat & Insect", "Eye of Octopus & Mammal", "None"], "ans": "Forelimbs of Man & Bat", "ref": "NCERT XII: Evolution", "exp": "Same structure, different function (Divergent Evolution)."},
-        {"q": "Double fertilization is unique to?", "opt": ["Angiosperms", "Gymnosperms", "Bryophytes", "Pteridophytes"], "ans": "Angiosperms", "ref": "NCERT XII: Sexual Reproduction", "exp": "Syngamy + Triple Fusion."}
+    "Biology": [ # NEET Only
+        "Diversity in Living World", "Structural Organisation in Plants/Animals", 
+        "Cell: Structure & Functions", "Plant Physiology", "Human Physiology", 
+        "Reproduction", "Genetics & Evolution", "Biology in Human Welfare", 
+        "Biotechnology", "Ecology & Environment"
     ],
-    "Maths": [
-        {"q": "Value of lim(x->0) (sin x / x)?", "opt": ["1", "0", "Infinity", "Does not exist"], "ans": "1", "ref": "NCERT XI: Limits", "exp": "Standard Limit theorem."},
-        {"q": "Derivative of log(x)?", "opt": ["1/x", "x", "e^x", "1"], "ans": "1/x", "ref": "NCERT XII: Continuity & Diff", "exp": "d/dx(ln x) = 1/x."},
-        {"q": "If A is a square matrix, A + A' is always?", "opt": ["Symmetric", "Skew-symmetric", "Identity", "Null"], "ans": "Symmetric", "ref": "NCERT XII: Matrices", "exp": "Transpose of (A+A') = A'+A = Same."},
-        {"q": "Integral of e^x dx?", "opt": ["e^x + C", "x e^x + C", "e^x / x", "log x"], "ans": "e^x + C", "ref": "NCERT XII: Integrals", "exp": "It is its own derivative and integral."},
-        {"q": "Slope of normal to y=x² at (1,1)?", "opt": ["-1/2", "2", "1", "-2"], "ans": "-1/2", "ref": "NCERT XII: AOD", "exp": "dy/dx = 2x. At x=1, m=2. Slope of normal = -1/m = -1/2."}
+    "Maths": [ # JEE Only
+        "Sets, Relations & Functions", "Complex Numbers", "Quadratic Equations", 
+        "Matrices & Determinants", "Permutations & Combinations", "Binomial Theorem", 
+        "Sequence & Series", "Limits, Continuity & Differentiability", 
+        "Integral Calculus", "Differential Equations", "Coordinate Geometry", 
+        "Vector Algebra & 3D Geometry", "Probability"
     ]
 }
+
+# --- 3. DYNAMIC THEMING (BACKGROUNDS & VISUALS) ---
+def get_theme_css(subject):
+    if subject == "Chemistry":
+        # Blue/Purple Chemical Lab Theme
+        return """
+        <style>
+            .stApp { background: linear-gradient(to bottom, #0f0c29, #302b63, #24243e); color: white; }
+            .subject-header { 
+                background: linear-gradient(90deg, #8E2DE2, #4A00E0); 
+                padding: 40px; border-radius: 20px; text-align: center;
+                box-shadow: 0 0 30px rgba(74, 0, 224, 0.5); border: 2px solid #a855f7;
+            }
+            .q-card { background: rgba(255, 255, 255, 0.1); border-left: 5px solid #d8b4fe; backdrop-filter: blur(10px); }
+            .btn-primary { background-color: #7c3aed !important; }
+        </style>
+        """
+    elif subject == "Biology":
+        # Green DNA/Nature Theme
+        return """
+        <style>
+            .stApp { background: linear-gradient(to bottom, #000000, #0f3d0f, #000000); color: #dcfce7; }
+            .subject-header { 
+                background: linear-gradient(90deg, #11998e, #38ef7d); 
+                padding: 40px; border-radius: 20px; text-align: center;
+                box-shadow: 0 0 30px rgba(56, 239, 125, 0.4); border: 2px solid #4ade80;
+            }
+            .q-card { background: rgba(20, 83, 45, 0.4); border-left: 5px solid #22c55e; backdrop-filter: blur(10px); }
+        </style>
+        """
+    elif subject == "Physics":
+        # Dark Space/Nebula Theme
+        return """
+        <style>
+            .stApp { background: linear-gradient(to bottom, #000000, #434343); color: #e0f2fe; }
+            .subject-header { 
+                background: linear-gradient(90deg, #cb2d3e, #ef473a); 
+                padding: 40px; border-radius: 20px; text-align: center;
+                box-shadow: 0 0 30px rgba(239, 71, 58, 0.5); border: 2px solid #f87171;
+            }
+            .q-card { background: rgba(255, 255, 255, 0.05); border-left: 5px solid #fca5a5; backdrop-filter: blur(10px); }
+        </style>
+        """
+    elif subject == "Maths":
+        # Tech Grid/Matrix Theme
+        return """
+        <style>
+            .stApp { background-color: #0d1117; color: #e6edf3; }
+            .subject-header { 
+                background: linear-gradient(90deg, #00F260, #0575E6); 
+                padding: 40px; border-radius: 20px; text-align: center;
+                box-shadow: 0 0 30px rgba(5, 117, 230, 0.5); border: 2px solid #60a5fa;
+            }
+            .q-card { background: rgba(30, 41, 59, 0.8); border-left: 5px solid #3b82f6; }
+        </style>
+        """
+    else:
+        # Default Landing Page (Golden/Premium)
+        return """
+        <style>
+            .stApp { background-color: #121212; color: #ffffff; }
+            .hero-card {
+                background: linear-gradient(135deg, #FFD700 0%, #FDB931 100%);
+                color: black; padding: 40px; border-radius: 15px; text-align: center;
+                box-shadow: 0 0 50px rgba(255, 215, 0, 0.3);
+            }
+        </style>
+        """
 
 # --- 4. SESSION STATE ---
 if 'page' not in st.session_state: st.session_state.page = "home"
 if 'questions' not in st.session_state: st.session_state.questions = []
 if 'responses' not in st.session_state: st.session_state.responses = {}
-if 'exam_details' not in st.session_state: st.session_state.exam_details = {}
+if 'exam_config' not in st.session_state: st.session_state.exam_config = {}
 
-# --- 5. AI GENERATOR (NCERT MODE) ---
-def get_ncert_paper(exam, grade, subject):
-    # Try AI First
+# --- 5. AI ENGINE (ADVANCED PROMPT) ---
+def get_advanced_paper(exam, subject, topic):
+    # Determine difficulty based on Exam Type
+    level = "Extremely Hard (JEE Advanced Level)" if "Advanced" in exam else "Hard (NEET/Mains Level)"
+    
     try:
         model = genai.GenerativeModel('gemini-1.5-flash')
         prompt = f"""
-        Act as a Senior Faculty for {exam} (JEE Advanced/NEET).
-        Create 5 Hard-Level MCQ Questions for Class {grade} {subject}.
+        Act as the Chief Paper Setter for NTA (India).
+        Create a High-Stakes Mock Test.
         
-        STRICT REQUIREMENT: 
-        1. Must be based on NCERT concepts.
-        2. Format: JSON.
-        3. Include 'ref' pointing to NCERT Chapter/Page.
+        exam: {exam}
+        subject: {subject}
+        topic: {topic}
+        difficulty: {level}
         
-        JSON Structure:
-        [{{ "q": "Question", "opt": ["A","B","C","D"], "ans": "Correct Option", "ref": "NCERT Ref", "exp": "Explanation" }}]
+        INSTRUCTIONS:
+        1. Generate 5 questions strictly from '{topic}'.
+        2. Questions must test deep concepts, numerical ability, and application.
+        3. For JEE, include Integer Type or Multi-correct logic if applicable (but MCQ format).
+        4. For NEET, include Assertion-Reason or Match-Matrix types.
+        
+        OUTPUT JSON:
+        [{{ "q": "Question Text", "opt": ["A","B","C","D"], "ans": "Correct Option", "exp": "Deep Concept Explanation" }}]
         """
         res = model.generate_content(prompt)
-        data = json.loads(res.text.replace("```json", "").replace("```", "").strip())
-        if data: return data
+        return json.loads(res.text.replace("```json", "").replace("```", "").strip())
     except:
-        pass
-    
-    # Fallback to Offline DB (Crash Proof)
-    return OFFLINE_DB.get(subject, OFFLINE_DB["Physics"])
+        # Offline Backup (Subject Specific)
+        return [
+            {"q": f"Offline Mode: Concept of {topic} is best described by?", "opt": ["Theory A", "Theory B", "Theory C", "Theory D"], "ans": "Theory A", "exp": "Server busy. This is a backup question."},
+            {"q": "Calculate the value for standard conditions.", "opt": ["Zero", "One", "Infinite", "Variable"], "ans": "Zero", "exp": "Standard result backup."}
+        ]
 
-# --- 6. PAGE: HOME ---
+# --- 6. PAGE: LANDING (EXAM SELECTION) ---
 if st.session_state.page == "home":
+    st.markdown(get_theme_css("Default"), unsafe_allow_html=True)
+    
     st.markdown("""
-    <div class="hero-container">
-        <div class="hero-content">
-            <h1>🧬 QUANTUM JEE/NEET</h1>
-            <p>Advanced NCERT-Based Intelligence Engine</p>
-        </div>
+    <div class="hero-card">
+        <h1 style="font-size: 60px; font-weight: 900;">NTA PRO 2.0</h1>
+        <p style="font-size: 20px;">The Most Advanced AI Exam Engine in India</p>
     </div>
     """, unsafe_allow_html=True)
     
-    col1, col2 = st.columns([1, 2])
+    st.write("")
+    st.write("")
     
-    with col1:
-        st.markdown("### ⚙️ Configure Test")
-        target_exam = st.selectbox("Target Exam", ["NEET (Medical)", "JEE Mains", "JEE Advanced"])
-        grade = st.selectbox("Class Level", ["Class 11", "Class 12"])
-        
-        st.markdown("---")
-        st.info("💡 Selecting 'JEE Advanced' will trigger high-level numericals.")
-
-    with col2:
-        st.markdown("### 🧪 Select Subject Module")
-        
-        subjects = ["Physics", "Chemistry", "Biology"] if "NEET" in target_exam else ["Physics", "Chemistry", "Maths"]
-        
-        # Grid of buttons
-        c1, c2, c3 = st.columns(3)
-        
-        for i, sub in enumerate(subjects):
-            col = [c1, c2, c3][i]
-            if col.button(f"{sub} 🔬", use_container_width=True):
-                st.session_state.exam_details = {"exam": target_exam, "grade": grade, "subject": sub}
-                
-                with st.status("🔄 Initializing Quantum Engine...", expanded=True):
-                    st.write(f"📂 Loading NCERT {grade} {sub} Database...")
-                    time.sleep(1)
-                    st.write("🧠 Synthesizing High-Order Questions...")
-                    
-                    st.session_state.questions = get_ncert_paper(target_exam, grade, sub)
-                    st.session_state.responses = {}
-                    st.session_state.page = "exam"
-                    st.rerun()
-
-# --- 7. PAGE: EXAM INTERFACE ---
-elif st.session_state.page == "exam":
-    details = st.session_state.exam_details
-    st.markdown(f"## 📝 {details['exam']} : {details['subject']} ({details['grade']})")
+    c1, c2, c3 = st.columns(3)
     
-    # Check if questions loaded
-    if not st.session_state.questions:
-        st.error("⚠️ Data Stream Interrupted. Reloading Protocol...")
-        st.session_state.questions = OFFLINE_DB.get(details['subject'], OFFLINE_DB["Physics"])
-        st.rerun()
+    with c1:
+        st.info("🩺 MEDICAL STREAM")
+        if st.button("START NEET UG", use_container_width=True):
+            st.session_state.exam_config = {"exam": "NEET UG", "subjects": ["Physics", "Chemistry", "Biology"]}
+            st.session_state.page = "subject_select"
+            st.rerun()
+            
+    with c2:
+        st.info("⚙️ ENGINEERING MAINS")
+        if st.button("START JEE MAINS", use_container_width=True):
+            st.session_state.exam_config = {"exam": "JEE MAINS", "subjects": ["Physics", "Chemistry", "Maths"]}
+            st.session_state.page = "subject_select"
+            st.rerun()
 
-    # Progress Bar
-    total = len(st.session_state.questions)
-    st.progress(len(st.session_state.responses) / total)
+    with c3:
+        st.error("🚀 ENGINEERING ADVANCED")
+        if st.button("START JEE ADVANCED", use_container_width=True):
+            st.session_state.exam_config = {"exam": "JEE ADVANCED", "subjects": ["Physics", "Chemistry", "Maths"]}
+            st.session_state.page = "subject_select"
+            st.rerun()
+
+# --- 7. PAGE: SUBJECT DASHBOARD ---
+elif st.session_state.page == "subject_select":
+    # Default dark theme for selection
+    st.markdown(get_theme_css("Default"), unsafe_allow_html=True)
     
-    for i, q in enumerate(st.session_state.questions):
-        st.markdown(f'<span class="ncert-tag">📖 {q.get("ref", "NCERT Concept")}</span>', unsafe_allow_html=True)
-        st.markdown(f'<div class="q-card"><b>Q{i+1}.</b> {q["q"]}</div>', unsafe_allow_html=True)
-        
-        sel = st.radio(f"Select Option {i+1}", q["opt"], key=f"q{i}", index=None)
-        if sel: st.session_state.responses[i] = sel
-        st.write("")
-
-    col_b1, col_b2 = st.columns([1, 4])
-    if col_b1.button("⬅️ Abort"):
+    exam = st.session_state.exam_config['exam']
+    subjects = st.session_state.exam_config['subjects']
+    
+    if st.button("⬅️ Change Exam"):
         st.session_state.page = "home"
         st.rerun()
+
+    st.markdown(f"## 🎯 Target: {exam} | Select Subject")
     
-    if col_b2.button("🚀 Submit & Analyze", type="primary", use_container_width=True):
+    cols = st.columns(len(subjects))
+    for i, sub in enumerate(subjects):
+        with cols[i]:
+            if st.button(f"{sub.upper()}", use_container_width=True):
+                st.session_state.exam_config['selected_subject'] = sub
+                st.session_state.page = "topic_select"
+                st.rerun()
+
+# --- 8. PAGE: TOPIC/SYLLABUS SELECTION ---
+elif st.session_state.page == "topic_select":
+    sub = st.session_state.exam_config['selected_subject']
+    exam = st.session_state.exam_config['exam']
+    
+    # APPLY DYNAMIC THEME BASED ON SUBJECT
+    st.markdown(get_theme_css(sub), unsafe_allow_html=True)
+    
+    # Subject Header
+    st.markdown(f"""
+    <div class="subject-header">
+        <h1>WELCOME TO {sub.upper()} LAB</h1>
+        <p>{exam} Edition | Advanced Syllabus Loaded</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.write("")
+    
+    # Syllabus Dropdown
+    topic_list = SYLLABUS.get(sub, [])
+    selected_topic = st.selectbox("📂 Select Chapter / Unit:", topic_list)
+    
+    st.write("")
+    
+    if st.button("🚀 INITIALIZE TEST ENVIRONMENT", type="primary", use_container_width=True):
+        st.session_state.exam_config['topic'] = selected_topic
+        
+        with st.status(f"⚙️ Generating {exam} Level Questions from '{selected_topic}'...", expanded=True):
+            st.write("🔍 Analyzing Previous Year Trends...")
+            time.sleep(1)
+            st.write("🧠 Constructing High-Difficulty Problems...")
+            st.session_state.questions = get_advanced_paper(exam, sub, selected_topic)
+            st.session_state.responses = {}
+            st.session_state.page = "exam"
+            st.rerun()
+            
+    if st.button("⬅️ Back"):
+        st.session_state.page = "subject_select"
+        st.rerun()
+
+# --- 9. PAGE: EXAM ARENA ---
+elif st.session_state.page == "exam":
+    sub = st.session_state.exam_config['selected_subject']
+    topic = st.session_state.exam_config['topic']
+    
+    # KEEP THEME
+    st.markdown(get_theme_css(sub), unsafe_allow_html=True)
+    
+    st.markdown(f"### 📝 Test: {topic}")
+    
+    if not st.session_state.questions:
+        st.error("Protocol Failed. Please Retry.")
+        if st.button("Back"): st.session_state.page = "home"; st.rerun()
+    
+    # Progress
+    total = len(st.session_state.questions)
+    st.progress(len(st.session_state.responses)/total)
+    
+    for i, q in enumerate(st.session_state.questions):
+        st.markdown(f"""
+        <div class="q-card">
+            <h4 style="margin:0;">Q{i+1}: {q['q']}</h4>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        sel = st.radio(f"Choose Option {i+1}", q['opt'], key=f"q{i}", index=None)
+        if sel: st.session_state.responses[i] = sel
+        st.write("")
+        
+    c1, c2 = st.columns([1, 4])
+    if c1.button("🛑 Abort"):
+        st.session_state.page = "home"
+        st.rerun()
+        
+    if c2.button("✅ FINAL SUBMIT", type="primary", use_container_width=True):
         st.session_state.page = "result"
         st.rerun()
 
-# --- 8. PAGE: ADVANCED ANALYTICS ---
+# --- 10. PAGE: RESULT ANALYTICS ---
 elif st.session_state.page == "result":
+    sub = st.session_state.exam_config['selected_subject']
+    # KEEP THEME
+    st.markdown(get_theme_css(sub), unsafe_allow_html=True)
+    
     score = sum([1 for i, q in enumerate(st.session_state.questions) if st.session_state.responses.get(i) == q['ans']])
     total = len(st.session_state.questions)
-    percentage = (score/total)*100
     
-    # High Tech Scoreboard
     st.markdown(f"""
-    <div style="text-align:center; padding: 20px; background: #1e293b; border-radius: 15px; border: 1px solid #334155;">
-        <h2 style="color: #94a3b8;">PERFORMANCE METRICS</h2>
-        <h1 style="font-size: 60px; color: {'#10b981' if percentage > 70 else '#ef4444'};">{score}/{total}</h1>
-        <p>ACCURACY: {percentage}%</p>
+    <div class="subject-header">
+        <h1>SCORE: {score}/{total}</h1>
+        <p>Advanced Analysis Report</p>
     </div>
-    <br>
     """, unsafe_allow_html=True)
     
     for i, q in enumerate(st.session_state.questions):
-        user = st.session_state.responses.get(i, "Not Attempted")
-        css = "correct" if user == q['ans'] else "wrong"
-        status = "✅ OPTIMAL" if user == q['ans'] else "❌ DEVIATION"
+        user = st.session_state.responses.get(i, "Skipped")
+        is_correct = (user == q['ans'])
+        css_class = "correct" if is_correct else "wrong"
+        status = "✅ CORRECT" if is_correct else "❌ INCORRECT"
         
         st.markdown(f"""
-        <div class="{css}">
-            <div style="display:flex; justify-content:space-between;">
-                <span style="font-size:12px; opacity:0.8;">{q.get('ref', 'NCERT')}</span>
-                <span style="font-weight:bold;">{status}</span>
-            </div>
-            <h4 style="margin-top:5px;">Q{i+1}: {q['q']}</h4>
-            <p><b>Your Input:</b> {user} | <b>Correct Output:</b> {q['ans']}</p>
-            <hr style="border-color: rgba(255,255,255,0.2);">
-            <p style="font-style: italic;">💡 <b>Logic:</b> {q['exp']}</p>
-        </div><br>
+        <style>
+            .correct {{ background: rgba(16, 185, 129, 0.2); border: 1px solid #10b981; padding: 15px; border-radius: 10px; }}
+            .wrong {{ background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; padding: 15px; border-radius: 10px; }}
+        </style>
+        <div class="{css_class}">
+            <h4>Q{i+1}: {q['q']}</h4>
+            <p><b>Your Ans:</b> {user} | <b>Correct:</b> {q['ans']}</p>
+            <p><b>Status:</b> {status}</p>
+            <hr style="border-color: rgba(255,255,255,0.1);">
+            <p><i>💡 Concept: {q['exp']}</i></p>
+        </div>
+        <br>
         """, unsafe_allow_html=True)
-
-    if st.button("🔄 Initiate New Protocol"):
+        
+    if st.button("🔄 Start New Test"):
         st.session_state.page = "home"
         st.rerun()
-                    
+    
