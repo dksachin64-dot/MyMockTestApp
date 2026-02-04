@@ -21,6 +21,7 @@ def run_agent(user_query):
     model = genai.GenerativeModel('gemini-1.5-flash')
     
     # --- PHASE 1: PLANNING (Simulation) ---
+    # Ye fake loading hai taaki user ko lage "Hacking/Searching" ho rahi hai
     with st.status("🧠 Agent X is processing...", expanded=True) as status:
         st.write("🔍 Analyzing Request Intent...")
         time.sleep(0.8)
@@ -35,14 +36,14 @@ def run_agent(user_query):
     
     # --- PHASE 2: GENERATION ---
     prompt = f"""
-    Act as 'Agent X', an advanced AI Assistant.
+    Act as 'Agent X', an advanced AI Assistant with a Hacker Persona.
     
     USER QUERY: {user_query}
     
     INSTRUCTIONS:
     1. Provide a highly detailed and structured answer.
-    2. If the user asks for current news, provide the latest info you have (up to your training cutoff).
-    3. Use a professional, hacker-like tone.
+    2. If the user asks for current news, provide the best info you know.
+    3. Use a professional, cyber-security / hacker-like tone.
     4. Format with bold headings and bullet points.
     
     RESPONSE FORMAT:
@@ -153,4 +154,4 @@ if query:
         
         # Save to History
         st.session_state.messages.append({"role": "assistant", "content": full_response})
-
+        
