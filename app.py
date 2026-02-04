@@ -1,23 +1,37 @@
 import streamlit as st
-import google.generativeai as genai
-from duckduckgo_search import DDGS
 import time
+import sys
+import subprocess
 
-# --- CONFIGURATION ---
+# --- 1. MAGIC AUTO-INSTALLER (Ye Error Fix Karega) ---
+# Ye check karega ki tool hai ya nahi. Agar nahi hai, to turant install karega.
+try:
+    from duckduckgo_search import DDGS
+except ImportError:
+    st.warning("⚙️ Installing Internet Search Tools... (Please wait)")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "duckduckgo-search"])
+    from duckduckgo_search import DDGS
+    st.success("✅ Installation Complete!")
+    time.sleep(1)
+    st.rerun()
+
+import google.generativeai as genai
+
+# --- 2. CONFIGURATION ---
 st.set_page_config(page_title="Agent X: The Researcher", page_icon="🕵️", layout="wide")
 
-# API Key Setup
-# Agar aapke paas nayi key hai to yahan dalein, purani limit over ho sakti hai
-GOOGLE_API_KEY = "AIzaSyALMoUhT8s7GYOHexDYrhnMNVT1xqQ4bgE" 
+# API Key
+GOOGLE_API_KEY = "AIzaSyALMoUhT8s7GYOHexDYrhnMNVT1xqQ4bgE"
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# --- THE AGENT BRAIN (TOOLS) ---
+# --- 3. THE AGENT BRAIN (TOOLS) ---
 
 def search_internet(query):
     """Real Internet Search using DuckDuckGo"""
     try:
         with DDGS() as ddgs:
-            results = list(ddgs.text(query, max_results=4))
+            # 5 results layenge taaki agent ke paas zyada info ho
+            results = list(ddgs.text(query, max_results=5))
             if results:
                 return "\n".join([f"- {r['title']}: {r['body']} (Link: {r['href']})" for r in results])
             return "No results found."
@@ -26,110 +40,101 @@ def search_internet(query):
 
 def run_agent(user_query):
     """
-    Agent Logic:
-    1. Sochta hai (Thinking)
-    2. Tool use karta hai (Searching)
-    3. Jawab banata hai (Answering)
+    Agent Logic: Thinking -> Searching -> Answering
     """
     model = genai.GenerativeModel('gemini-1.5-flash')
     
-    # Step 1: Decision Making
-    status_placeholder.markdown("🧠 **Agent X is Thinking...**")
-    time.sleep(1)
+    # UI Updates (Thinking Process)
+    status_placeholder.info("🧠 Agent X is Thinking...")
+    time.sleep(0.5)
     
-    # Simple logic: Har query ke liye internet search karega (Best for Live Info)
-    status_placeholder.markdown(f"🌍 **Searching Internet for:** *'{user_query}'*...")
+    status_placeholder.warning(f"🌍 Searching Live Web for: '{user_query}'...")
     search_results = search_internet(user_query)
     
-    # Step 2: Processing Info
-    status_placeholder.markdown("📝 **Reading & Synthesizing Data...**")
+    status_placeholder.success("📝 Analyze & Writing Answer...")
     
+    # AI ko Internet ka Data khilana
     prompt = f"""
-    You are an AI Agent named 'Agent X'.
-    You have access to real-time internet search results.
+    You are Agent X, an advanced AI with real-time internet access.
     
-    USER QUERY: {user_query}
+    USER QUESTION: {user_query}
     
-    SEARCH RESULTS FROM INTERNET:
+    LIVE INTERNET DATA:
     {search_results}
     
     INSTRUCTIONS:
-    1. Answer the user's query using the Search Results.
-    2. Be professional, concise, and accurate.
-    3. Cite the links if available.
-    4. If the info is not in the search results, say "I couldn't find live info on this."
+    1. Answer the user's question using the Internet Data.
+    2. If data is about stock price, news, or sports, give the LATEST value.
+    3. Keep it professional and direct.
+    4. Provide links/sources at the end.
     """
     
     response = model.generate_content(prompt)
-    status_placeholder.empty() # Clear status
+    status_placeholder.empty() # Remove status bar
     return response.text
 
-# --- UI DESIGN (HACKER STYLE) ---
+# --- 4. UI DESIGN (MATRIX STYLE) ---
 st.markdown("""
 <style>
     .stApp { background-color: #000000; color: #00ff41; font-family: 'Courier New', monospace; }
     
-    /* Input Box */
+    /* Search Bar */
     .stTextInput > div > div > input {
-        background-color: #111; color: #00ff41; border: 1px solid #00ff41;
+        background-color: #111; color: #00ff41; 
+        border: 1px solid #00ff41; border-radius: 5px;
     }
     
-    /* Result Box */
-    .agent-response {
-        border: 1px solid #00ff41;
-        padding: 20px;
-        background: #0a0a0a;
-        border-radius: 5px;
-        margin-top: 20px;
-        box-shadow: 0 0 10px rgba(0, 255, 65, 0.2);
+    /* Chat Bubbles */
+    .user-msg { text-align: right; color: #00c6ff; margin: 10px; font-weight: bold; }
+    .agent-msg { 
+        border: 1px solid #00ff41; 
+        padding: 15px; 
+        background: #050505; 
+        border-radius: 8px; 
+        margin-top: 10px; 
+        box-shadow: 0 0 15px rgba(0, 255, 65, 0.1);
     }
     
-    /* Title */
-    h1 { text-shadow: 0 0 10px #00ff41; }
+    h1 { text-shadow: 0 0 10px #00ff41; border-bottom: 2px solid #00ff41; padding-bottom: 10px; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- APP LAYOUT ---
-st.title("🕵️ AGENT X : LIVE ACCESS")
-st.markdown("I am not just a chatbot. I have access to the **Real-Time Internet**.")
+# --- 5. APP LAYOUT ---
+st.title("🕵️ AGENT X : LIVE NET ACCESS")
+st.markdown("ask me anything. I can search the **Real Internet**.")
 
-# Chat History
+# Chat History Session
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Input
-query = st.chat_input("Command me: (e.g., 'What is the price of Bitcoin right now?')")
+# Input Box
+query = st.chat_input("Enter Command (e.g., 'Who won the match yesterday?')")
 
-# Display History
+# Show Old Chats
 for message in st.session_state.messages:
+    role_class = "user-msg" if message["role"] == "user" else "agent-msg"
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+        st.markdown(f'<div class="{role_class}">{message["content"]}</div>', unsafe_allow_html=True)
 
-# Agent Action
+# Process New Query
 if query:
-    # User Msg
+    # Show User Query
     st.session_state.messages.append({"role": "user", "content": query})
     with st.chat_message("user"):
-        st.markdown(query)
+        st.markdown(f'<div class="user-msg">{query}</div>', unsafe_allow_html=True)
     
-    # Agent Msg Container
+    # Agent Action
     with st.chat_message("assistant"):
-        status_placeholder = st.empty() # For live updates
+        status_placeholder = st.empty() # Placeholder for status updates
         
         try:
-            # RUN THE AGENT
             full_response = run_agent(query)
             
-            st.markdown(f"""
-            <div class="agent-response">
-                {full_response}
-            </div>
-            """, unsafe_allow_html=True)
+            # Show Answer
+            st.markdown(f'<div class="agent-msg">{full_response}</div>', unsafe_allow_html=True)
             
-            # Save history
+            # Save History
             st.session_state.messages.append({"role": "assistant", "content": full_response})
             
         except Exception as e:
-            st.error(f"Agent Connection Failed: {e}")
-            st.info("Tip: Check your Internet or API Key Quota.")
-
+            st.error(f"System Error: {e}")
