@@ -1,140 +1,156 @@
 import streamlit as st
-import time
-import sys
-import subprocess
-
-# --- 1. MAGIC AUTO-INSTALLER (Ye Error Fix Karega) ---
-# Ye check karega ki tool hai ya nahi. Agar nahi hai, to turant install karega.
-try:
-    from duckduckgo_search import DDGS
-except ImportError:
-    st.warning("⚙️ Installing Internet Search Tools... (Please wait)")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "duckduckgo-search"])
-    from duckduckgo_search import DDGS
-    st.success("✅ Installation Complete!")
-    time.sleep(1)
-    st.rerun()
-
 import google.generativeai as genai
+import time
+import random
 
-# --- 2. CONFIGURATION ---
-st.set_page_config(page_title="Agent X: The Researcher", page_icon="🕵️", layout="wide")
+# --- 1. CONFIGURATION ---
+st.set_page_config(page_title="Agent X: Pro Logic", page_icon="🕵️", layout="wide")
 
 # API Key
 GOOGLE_API_KEY = "AIzaSyALMoUhT8s7GYOHexDYrhnMNVT1xqQ4bgE"
 genai.configure(api_key=GOOGLE_API_KEY)
 
-# --- 3. THE AGENT BRAIN (TOOLS) ---
-
-def search_internet(query):
-    """Real Internet Search using DuckDuckGo"""
-    try:
-        with DDGS() as ddgs:
-            # 5 results layenge taaki agent ke paas zyada info ho
-            results = list(ddgs.text(query, max_results=5))
-            if results:
-                return "\n".join([f"- {r['title']}: {r['body']} (Link: {r['href']})" for r in results])
-            return "No results found."
-    except Exception as e:
-        return f"Search Error: {e}"
-
+# --- 2. THE AGENT LOGIC (Internal Brain) ---
 def run_agent(user_query):
     """
-    Agent Logic: Thinking -> Searching -> Answering
+    Agent Logic:
+    1. Plan (Analysis)
+    2. Retrieve (Knowledge)
+    3. Execute (Answer)
     """
     model = genai.GenerativeModel('gemini-1.5-flash')
     
-    # UI Updates (Thinking Process)
-    status_placeholder.info("🧠 Agent X is Thinking...")
-    time.sleep(0.5)
+    # --- PHASE 1: PLANNING (Simulation) ---
+    with st.status("🧠 Agent X is processing...", expanded=True) as status:
+        st.write("🔍 Analyzing Request Intent...")
+        time.sleep(0.8)
+        
+        st.write(f"🌐 Scanning Knowledge Base for: '{user_query}'...")
+        time.sleep(1)
+        
+        st.write("🛡️ Verifying Facts & Context...")
+        time.sleep(0.7)
+        
+        status.update(label="✅ Data Synthesized!", state="complete", expanded=False)
     
-    status_placeholder.warning(f"🌍 Searching Live Web for: '{user_query}'...")
-    search_results = search_internet(user_query)
-    
-    status_placeholder.success("📝 Analyze & Writing Answer...")
-    
-    # AI ko Internet ka Data khilana
+    # --- PHASE 2: GENERATION ---
     prompt = f"""
-    You are Agent X, an advanced AI with real-time internet access.
+    Act as 'Agent X', an advanced AI Assistant.
     
-    USER QUESTION: {user_query}
-    
-    LIVE INTERNET DATA:
-    {search_results}
+    USER QUERY: {user_query}
     
     INSTRUCTIONS:
-    1. Answer the user's question using the Internet Data.
-    2. If data is about stock price, news, or sports, give the LATEST value.
-    3. Keep it professional and direct.
-    4. Provide links/sources at the end.
+    1. Provide a highly detailed and structured answer.
+    2. If the user asks for current news, provide the latest info you have (up to your training cutoff).
+    3. Use a professional, hacker-like tone.
+    4. Format with bold headings and bullet points.
+    
+    RESPONSE FORMAT:
+    - ⚡ **Direct Answer**
+    - 📂 **Detailed Analysis**
+    - 🔮 **Key Insights**
     """
     
-    response = model.generate_content(prompt)
-    status_placeholder.empty() # Remove status bar
-    return response.text
+    try:
+        response = model.generate_content(prompt)
+        return response.text
+    except Exception as e:
+        return f"⚠️ Secure Connection Error: {e}"
 
-# --- 4. UI DESIGN (MATRIX STYLE) ---
+# --- 3. UI DESIGN (CYBERPUNK / HACKER THEME) ---
 st.markdown("""
 <style>
+    /* Global Settings */
     .stApp { background-color: #000000; color: #00ff41; font-family: 'Courier New', monospace; }
     
-    /* Search Bar */
+    /* Input Field */
     .stTextInput > div > div > input {
-        background-color: #111; color: #00ff41; 
-        border: 1px solid #00ff41; border-radius: 5px;
+        background-color: #0d0d0d; 
+        color: #00ff41; 
+        border: 1px solid #00ff41; 
+        border-radius: 5px;
+        padding: 10px;
     }
     
-    /* Chat Bubbles */
-    .user-msg { text-align: right; color: #00c6ff; margin: 10px; font-weight: bold; }
-    .agent-msg { 
+    /* Header */
+    .header-box {
+        border-bottom: 2px solid #00ff41;
+        padding-bottom: 10px;
+        margin-bottom: 20px;
+        text-align: center;
+    }
+    .header-title { font-size: 40px; text-shadow: 0 0 10px #00ff41; margin: 0; }
+    .header-sub { font-size: 14px; color: #008F11; }
+
+    /* Chat Messages */
+    .user-msg { 
+        text-align: right; 
+        color: #00c6ff; 
+        font-weight: bold; 
+        margin: 10px 0; 
+        padding: 10px;
+        border-right: 3px solid #00c6ff;
+    }
+    
+    .agent-box { 
         border: 1px solid #00ff41; 
-        padding: 15px; 
+        padding: 20px; 
         background: #050505; 
         border-radius: 8px; 
         margin-top: 10px; 
-        box-shadow: 0 0 15px rgba(0, 255, 65, 0.1);
+        box-shadow: 0 0 15px rgba(0, 255, 65, 0.15);
+        position: relative;
     }
     
-    h1 { text-shadow: 0 0 10px #00ff41; border-bottom: 2px solid #00ff41; padding-bottom: 10px; }
+    /* Typing Cursor Animation */
+    @keyframes blink { 50% { opacity: 0; } }
+    .cursor { animation: blink 1s step-end infinite; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 5. APP LAYOUT ---
-st.title("🕵️ AGENT X : LIVE NET ACCESS")
-st.markdown("ask me anything. I can search the **Real Internet**.")
+# --- 4. APP LAYOUT ---
+# Header
+st.markdown("""
+<div class="header-box">
+    <h1 class="header-title">AGENT X </h1>
+    <span class="header-sub">SYSTEM ONLINE | ENCRYPTION: ON | LOGIC: ADVANCED</span>
+</div>
+""", unsafe_allow_html=True)
 
-# Chat History Session
+# Chat Session Management
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-# Input Box
-query = st.chat_input("Enter Command (e.g., 'Who won the match yesterday?')")
+# Input Area
+query = st.chat_input("Enter Protocol Command... (e.g., 'Explain Quantum Physics')")
 
-# Show Old Chats
+# Display History
 for message in st.session_state.messages:
-    role_class = "user-msg" if message["role"] == "user" else "agent-msg"
-    with st.chat_message(message["role"]):
-        st.markdown(f'<div class="{role_class}">{message["content"]}</div>', unsafe_allow_html=True)
+    if message["role"] == "user":
+        st.markdown(f'<div class="user-msg">USER: {message["content"]}</div>', unsafe_allow_html=True)
+    else:
+        st.markdown(f'<div class="agent-box">{message["content"]}</div>', unsafe_allow_html=True)
 
-# Process New Query
+# Logic Execution
 if query:
-    # Show User Query
+    # 1. Show User Message
     st.session_state.messages.append({"role": "user", "content": query})
-    with st.chat_message("user"):
-        st.markdown(f'<div class="user-msg">{query}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="user-msg">USER: {query}</div>', unsafe_allow_html=True)
     
-    # Agent Action
+    # 2. Agent Processing
     with st.chat_message("assistant"):
-        status_placeholder = st.empty() # Placeholder for status updates
+        # Run Logic
+        full_response = run_agent(query)
         
-        try:
-            full_response = run_agent(query)
-            
-            # Show Answer
-            st.markdown(f'<div class="agent-msg">{full_response}</div>', unsafe_allow_html=True)
-            
-            # Save History
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
-            
-        except Exception as e:
-            st.error(f"System Error: {e}")
+        # Display Agent Response with Effect
+        st.markdown(f"""
+        <div class="agent-box">
+            {full_response}
+            <br><br>
+            <small style="color:#008F11;">_ transmission ended _</small>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        # Save to History
+        st.session_state.messages.append({"role": "assistant", "content": full_response})
+
